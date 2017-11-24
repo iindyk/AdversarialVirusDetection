@@ -1,0 +1,6 @@
+#!/bin/bash
+i=0
+for f in files/harmless/*.exe; do
+	objdump -d "$f" > "dumps/harmless/$i.txt"
+	i=$((i+1))
+done 
