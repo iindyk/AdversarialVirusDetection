@@ -43,18 +43,18 @@ def files2freq_pickle(folder_name, dictionary, valid_share, test_share):
     np.random.shuffle(idx_harmless)
     idx_viruses = np.arange(n_harmless, n)
     np.random.shuffle(idx_viruses)
-    train_v_idx, val_v_idx, test_v_idx = \
-        np.split(idx_viruses, [int((1.0-valid_share-test_share) * (n-n_harmless)),
-                               int((1.0-test_share) * (n-n_harmless))])
+    val_v_idx, test_v_idx, train_v_idx = \
+        np.split(idx_viruses, [int(valid_share * (n-n_harmless)),
+                               int((valid_share + test_share) * (n-n_harmless))])
     train_dataset = dataset[train_v_idx, :]
     train_labels = labels[train_v_idx]
     valid_dataset = dataset[val_v_idx, :]
     valid_labels = labels[val_v_idx]
     test_dataset = dataset[test_v_idx, :]
     test_labels = labels[test_v_idx]
-    train_h_idx, val_h_idx, test_h_idx = \
-        np.split(idx_harmless, [int((1.0 - valid_share - test_share) * n_harmless),
-                                int((1.0 - test_share) * n_harmless)])
+    val_h_idx, test_h_idx, train_h_idx = \
+        np.split(idx_harmless, [int(valid_share * n_harmless),
+                                int((valid_share + test_share) * n_harmless)])
     train_dataset = np.append(train_dataset, dataset[train_h_idx, :], axis=0)
     train_labels = np.append(train_labels, labels[train_h_idx], axis=0)
     valid_dataset = np.append(valid_dataset, dataset[val_h_idx, :], axis=0)
