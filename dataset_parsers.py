@@ -90,11 +90,16 @@ def create_dictionary():
     for file in os.listdir(os.fsencode(directory_in_str_v)):
         filename = os.fsdecode(file)
         f = open(directory_in_str_v+'/'+filename, 'r')
-        words = f.read().split()
+        print(filename)
+        try:
+            words = f.read().split()
+        except UnicodeDecodeError:
+            continue
         for word in words:
             if word in dictionary:
                 dictionary[word] += 1
-            else:
+            elif not (any(char.isdigit() for char in word) or '%' in word or '<' in word or '(' in word or '.' in word
+                      or ':' in word):
                 dictionary[word] = 1
         f.close()
 
@@ -102,18 +107,22 @@ def create_dictionary():
     for file in os.listdir(os.fsencode(directory_in_str_h)):
         filename = os.fsdecode(file)
         f = open(directory_in_str_h + '/' + filename, 'r')
-        words = f.read().split()
+        print(filename)
+        try:
+            words = f.read().split()
+        except UnicodeDecodeError:
+            continue
         for word in words:
             if word in dictionary:
                 dictionary[word] += 1
-            else:
+            elif not (any(char.isdigit() for char in word) or '%' in word or '<' in word or '(' in word or '.' in word
+                      or ':' in word):
                 dictionary[word] = 1
         f.close()
 
     final_dict = list(dictionary.keys())
     for word in dictionary:
-        if dictionary[word] < 10 or any(char.isdigit() for char in word) or '%' in word or '<' in word\
-                or '(' in word or '.' in word:
+        if dictionary[word] < 20:
             final_dict.remove(word)
     final_dict.remove('file')
     final_dict.remove('format')
@@ -129,6 +138,7 @@ def create_dictionary():
     dictionary_file = open('/home/iindyk/PycharmProjects/AdversarialVirusDetection/dictionary.txt', 'w')
     for word in final_dict:
         dictionary_file.write("%s\n" % word)
+    dictionary_file.close()
     print(len(final_dict))
     print(final_dict)
 
