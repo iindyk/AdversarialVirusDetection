@@ -13,7 +13,10 @@ def file2freq(filename, dictionary):
         if word in dictionary:
             count[dictionary.index(word)] += 1
     file.close()
-    return count/sum(count)
+    if sum(count) == 0:
+        return count
+    else:
+        return count/sum(count)
 
 
 # convert subfolders "harmless" and "viruses" in current folder to dataset pickle file
@@ -90,7 +93,6 @@ def create_dictionary():
     for file in os.listdir(os.fsencode(directory_in_str_v)):
         filename = os.fsdecode(file)
         f = open(directory_in_str_v+'/'+filename, 'r')
-        print(filename)
         try:
             words = f.read().split()
         except UnicodeDecodeError:
@@ -107,7 +109,6 @@ def create_dictionary():
     for file in os.listdir(os.fsencode(directory_in_str_h)):
         filename = os.fsdecode(file)
         f = open(directory_in_str_h + '/' + filename, 'r')
-        print(filename)
         try:
             words = f.read().split()
         except UnicodeDecodeError:
