@@ -90,7 +90,33 @@ def create_dictionary():
 
     for file in os.listdir(directory):
         filename = os.fsdecode(file)
-        f = open(filename, 'r')
+        f = open(directory_in_str+'/'+filename, 'r')
+        words = f.read().split()
+        for word in words:
+            if word in dictionary:
+                dictionary[word] += 1
+            else:
+                dictionary[word] = 1
+        f.close()
+
+    final_dict = list(dictionary.keys())
+    for word in dictionary:
+        if dictionary[word] < 10 or any(char.isdigit() for char in word) or '%' in word or '<' in word\
+                or '(' in word or '.' in word:
+            final_dict.remove(word)
+    final_dict.remove('file')
+    final_dict.remove('format')
+    final_dict.remove('Disassembly')
+    final_dict.remove('of')
+    final_dict.remove('section')
+    final_dict.remove('ff')
+    final_dict.remove('fc')
+    final_dict.remove('ec')
+    final_dict.remove('da')
+    final_dict.append('int3')
+    print(len(final_dict))
+    print(final_dict)
+
 
 
 
