@@ -1,4 +1,5 @@
 import os
+import pickle
 import numpy as np
 
 
@@ -61,9 +62,35 @@ def files2freq_pickle(folder_name, dictionary, valid_share, test_share):
     valid_labels = np.append(valid_labels, labels[val_h_idx], axis=0)
     test_dataset = np.append(test_dataset, dataset[test_h_idx, :], axis=0)
     test_labels = np.append(test_labels, labels[test_h_idx], axis=0)
-    print('train dataset: ', train_dataset, train_labels)
-    print('valid dataset: ', valid_dataset, valid_labels)
-    print('test dataset: ', test_dataset, test_labels)
+
+    # save dataset to pickle
+    dataset_dict = {'train_dataset': train_dataset, 'train_labels': train_labels,
+                    'valid_dataset': valid_dataset, 'valid_labels': valid_labels,
+                    'test_dataset': test_dataset, 'test_labels': test_labels}
+    pickle.dump(dataset_dict, open("dataset.p", "wb"))
+
+
+# read dataset from pickle
+def read_data():
+    dataset_dict = pickle.load(open("dataset.p", "rb"))
+    train_dataset = dataset_dict['train_dataset']
+    train_labels = dataset_dict['train_labels']
+    valid_dataset = dataset_dict['valid_dataset']
+    valid_labels = dataset_dict['valid_labels']
+    test_dataset = dataset_dict['test_dataset']
+    test_labels = dataset_dict['test_labels']
+    return train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels
+
+
+# create dictionary of used opcode commands
+def create_dictionary():
+    dictionary = {}
+    directory_in_str = '/home/iindyk/PycharmProjects/AdversarialVirusDetection/dumps/test'
+    directory = os.fsencode(directory_in_str)
+
+    for file in os.listdir(directory):
+        filename = os.fsdecode(file)
+        f = open(filename, 'r')
 
 
 
