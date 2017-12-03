@@ -85,12 +85,23 @@ def read_data():
 # create dictionary of used opcode commands
 def create_dictionary():
     dictionary = {}
-    directory_in_str = '/home/iindyk/PycharmProjects/AdversarialVirusDetection/dumps/test'
-    directory = os.fsencode(directory_in_str)
 
-    for file in os.listdir(directory):
+    directory_in_str_v = '/home/iindyk/PycharmProjects/AdversarialVirusDetection/dumps/viruses'
+    for file in os.listdir(os.fsencode(directory_in_str_v)):
         filename = os.fsdecode(file)
-        f = open(directory_in_str+'/'+filename, 'r')
+        f = open(directory_in_str_v+'/'+filename, 'r')
+        words = f.read().split()
+        for word in words:
+            if word in dictionary:
+                dictionary[word] += 1
+            else:
+                dictionary[word] = 1
+        f.close()
+
+    directory_in_str_h = '/home/iindyk/PycharmProjects/AdversarialVirusDetection/dumps/harmless'
+    for file in os.listdir(os.fsencode(directory_in_str_h)):
+        filename = os.fsdecode(file)
+        f = open(directory_in_str_h + '/' + filename, 'r')
         words = f.read().split()
         for word in words:
             if word in dictionary:
@@ -114,6 +125,10 @@ def create_dictionary():
     final_dict.remove('ec')
     final_dict.remove('da')
     final_dict.append('int3')
+
+    dictionary_file = open('/home/iindyk/PycharmProjects/AdversarialVirusDetection/dictionary.txt', 'w')
+    for word in final_dict:
+        dictionary_file.write("%s\n" % word)
     print(len(final_dict))
     print(final_dict)
 
