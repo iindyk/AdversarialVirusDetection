@@ -33,7 +33,10 @@ def files2freq_pickle(folder_name, dictionary, valid_share, test_share):
     i = 0
     for f in os.listdir(folder_name+'/harmless'):
         print(i)
-        dataset[i, :] = file2freq(folder_name+'/harmless/'+f, dictionary)
+        try:
+            dataset[i, :] = file2freq(folder_name+'/harmless/'+f, dictionary)
+        except UnicodeDecodeError:
+            continue
         labels[i] = 1.0
         i += 1
     n_harmless = i
@@ -41,7 +44,10 @@ def files2freq_pickle(folder_name, dictionary, valid_share, test_share):
     # viruses
     for v in os.listdir(folder_name+'/viruses'):
         print(i)
-        dataset[i, :] = file2freq(folder_name+'/viruses/'+v, dictionary)
+        try:
+            dataset[i, :] = file2freq(folder_name+'/viruses/'+v, dictionary)
+        except UnicodeDecodeError:
+            continue
         labels[i] = -1.0
         i += 1
 
