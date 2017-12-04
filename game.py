@@ -1,12 +1,16 @@
 import dataset_parsers as dp
-import os
-import sklearn.svm as svm
-from sklearn.metrics import accuracy_score
+import players as pl
+import numpy as np
 
 
-C = 1.0
+n_initial = 100 # size of initial training dataset
+n_steps = 10    # number of steps in game
+C = 1.0         # classifier parameter
 train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels = dp.read_data()
-svm = svm.SVC(kernel='linear', C=C).fit(train_dataset, train_labels)
-pred_labels = svm.predict(test_dataset)
-err = 1 - accuracy_score(test_labels, pred_labels)
-print(err)
+steps = np.arange(n_initial, len(train_labels), np.ceil((len(train_labels)-n_initial)/n_steps))
+classifier = pl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
+                           , valid_dataset, valid_labels, C)
+adversary = pl.Adversary(train_dataset[:n_initial, :], train_labels[:n_initial], test_dataset, test_labels)
+
+print(steps)
+#for i in range(n_steps):

@@ -1,5 +1,6 @@
 import sklearn.svm as svm
 import numpy as np
+from scipy.optimize import minimize
 from sklearn.metrics import accuracy_score
 
 
@@ -70,7 +71,63 @@ class Classifier:
 
 class Adversary:
     eps = 10
+    a = 1.0
 
+    def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels):
+        self.train_dataset = initial_train_dataset
+        self.train_labels = initial_train_labels
+        self.test_dataset = test_dataset
+        self.test_labels = test_labels
+        self.current_w = np.zeros(len(initial_train_dataset[0]))
+        self.current_b = 0.0
+
+    def add_train_data(self, new_train_data, new_train_labels):
+        self.train_dataset = np.append(self.train_dataset, new_train_data, axis=0)
+        self.train_labels = np.append(self.train_labels, new_train_labels)
+
+    def adv_obj(self, x, dataset, labels):
+        n,m = np.shape(dataset)
+        w = x[:m]
+        b = x[m]
+        h = np.reshape(x[m+1:], (n,m))
+        ret = 0.0
+        # classifier approximation of error on existing training dataset
+        n_e = len(self.train_labels)
+        for i in range(n_e):
+            ret+=max(1-self.train_labels[i]*(np.dot(w, self.train_dataset[i,:])+b),0)/n_e
+
+        # classifier approximation of error on new training points
+        for i in range(n):
+            ret+=max(1-labels[i]*(np.dot(w, dataset[i,:]+h[i,:])+b),0)/n
+
+        # adversary approximation of error on test set
+        n_t = len(self.test_labels)
+        for i in range(n_t):
+            ret += self.a*max(self.test_labels[i]*(np.dot(w, self.test_dataset[i, :])+b), -1)
+
+    def adv_constr_ineq(self, x, n, m):
+        h = np.reshape(x[m+1:], (n,m))
+        return n*self.eps**2 - sum([np.dot(h[i, :], h[i, :]) for i in range(n)])
+
+    def adv_constr_eq(self, x, n, m):
+        h = np.reshape(x[m + 1:], (n, m))
+        ret = []
+        for i in range(n):
+            ret.append(sum(h[i, :]))
+        return np.array(ret)
+
+    def get_attack(self, new_train_data, new_train_labels):
+        n, m = np.shape(new_train_data)
+        x0 = np.zeros(m+1+n*m)
+        x0[:m] = self.current_w
+        x0[m] = self.current_b
+        con1 = {'type': 'ineq', 'fun': lambda x: self.adv_constr_ineq(x, n, m)}
+        con2 = {'type': 'ineq', 'fun': lambda x: self.adv_constr_eq(x, n, m)}
+        cons = [con1, con2]
+        options = {'maxiter': 1000}
+        sol = minimize(lambda x: self.adv_obj(x, new_train_data, new_train_labels),
+                       x0, constraints=cons, options=options)
+        return np.reshape(sol.x[m+1:], (n, m))
 
 
 
