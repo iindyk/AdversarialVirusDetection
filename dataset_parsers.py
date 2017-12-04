@@ -10,7 +10,8 @@ def file2freq(filename, dictionary):
     words = file.read().split()
 
     for word in words:
-        if word in dictionary:
+        if not (any(char.isdigit() for char in word) or '%' in word or '<' in word or '(' in word or '.' in word
+                or ':' in word) and word in dictionary:
             count[dictionary.index(word)] += 1
     file.close()
     if sum(count) == 0:
@@ -31,6 +32,7 @@ def files2freq_pickle(folder_name, dictionary, valid_share, test_share):
     # harmless files
     i = 0
     for f in os.listdir(folder_name+'/harmless'):
+        print(i)
         dataset[i, :] = file2freq(folder_name+'/harmless/'+f, dictionary)
         labels[i] = 1.0
         i += 1
@@ -38,6 +40,7 @@ def files2freq_pickle(folder_name, dictionary, valid_share, test_share):
 
     # viruses
     for v in os.listdir(folder_name+'/viruses'):
+        print(i)
         dataset[i, :] = file2freq(folder_name+'/viruses/'+v, dictionary)
         labels[i] = -1.0
         i += 1
