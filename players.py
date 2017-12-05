@@ -2,6 +2,7 @@ import sklearn.svm as svm
 import numpy as np
 from scipy.optimize import minimize
 from sklearn.metrics import accuracy_score
+from memory_profiler import profile
 
 
 class Classifier:
@@ -38,12 +39,13 @@ class Classifier:
     def is_valid(self, train_dataset, train_labels):
         test_stat_h = self.part_test_stat_h
         test_stat_v = self.part_test_stat_v
-        train_h_indeces = np.where(train_labels ==1)
-        train_v_indeces = np.where(train_labels ==-1)
-        valid_h_indeces = np.where(self.valid_labels ==1)
-        valid_v_indeces = np.where(self.valid_labels ==-1)
+        train_h_indeces = np.where(train_labels == 1)[0]
+        train_v_indeces = np.where(train_labels == -1)[0]
+        valid_h_indeces = np.where(self.valid_labels == 1)[0]
+        valid_v_indeces = np.where(self.valid_labels == -1)[0]
 
         # harmless points
+        print(np.shape(train_h_indeces))
         for i in train_h_indeces:
             for j in valid_h_indeces:
                 test_stat_h += np.linalg.norm(train_dataset[i,:]-self.valid_dataset[j,:])/(len(train_h_indeces)*len(valid_h_indeces))
@@ -70,7 +72,7 @@ class Classifier:
 
 
 class Adversary:
-    eps = 1
+    eps = 10
     a = 1.0
 
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels):
@@ -85,47 +87,74 @@ class Adversary:
         self.train_dataset = np.append(self.train_dataset, new_train_data, axis=0)
         self.train_labels = np.append(self.train_labels, new_train_labels)
 
-    def adv_obj(self, x, dataset, labels):
-        n,m = np.shape(dataset)
-        w = x[:m]
-        b = x[m]
-        h = np.reshape(x[m+1:], (n,m))
-        ret = 0.0
-        # classifier approximation of error on existing training dataset
-        n_e = len(self.train_labels)
-        for i in range(n_e):
-            ret+=max(1-self.train_labels[i]*(np.dot(w, self.train_dataset[i,:])+b),0)/n_e
-
-        # classifier approximation of error on new training points
-        for i in range(n):
-            ret += max(1-labels[i]*(np.dot(w, dataset[i,:]+h[i,:])+b),0)/n
-
-        # adversary approximation of error on test set
-        n_t = len(self.test_labels)
-        for i in range(n_t):
-            ret += self.a*max(self.test_labels[i]*(np.dot(w, self.test_dataset[i, :])+b), -1)
-        return ret
-
-    def adv_constr_ineq(self, x, n, m):
-        h = np.reshape(x[m+1:], (n, m))
-        return n*self.eps**2 - sum([np.dot(h[i, :], h[i, :]) for i in range(n)])
-
-    def adv_constr_eq(self, x, n, m):
-        h = np.reshape(x[m + 1:], (n, m))
-        ret = []
-        for i in range(n):
-            ret.append(sum(h[i, :]))
-        return np.array(ret)
-
+    @profile
     def get_infected_dataset(self, new_train_data, new_train_labels):
         n, m = np.shape(new_train_data)
-        print(n,'asdasd', m)
         x0 = np.zeros(m+1+n*m)
         x0[:m] = self.current_w
         x0[m] = self.current_b
-        con1 = {'type': 'ineq', 'fun': lambda x: self.adv_constr_ineq(x, n, m)}
-        con2 = {'type': 'ineq', 'fun': lambda x: self.adv_constr_eq(x, n, m)} ####
-        cons = [con1, con2]
+        n_e = len(self.train_labels)
+        n_t = len(self.test_labels)
+
+        def adv_obj(x):
+            w = x[:m]
+            b = x[m]
+            h = np.reshape(x[m + 1:], (n, m))
+            ret = 0.0
+            # classifier approximation of error on existing training dataset
+            for i in range(n_e):
+                ret += max(1 - self.train_labels[i] * (np.dot(w, self.train_dataset[i, :]) + b), 0) / n_e
+
+            # classifier approximation of error on new training points
+            for i in range(n):
+                ret += max(1 - new_train_labels[i] * (np.dot(w, new_train_data[i, :] + h[i, :]) + b), 0) / n
+
+            # adversary approximation of error on test set
+            for i in range(n_t):
+                ret += self.a * max(self.test_labels[i] * (np.dot(w, self.test_dataset[i, :]) + b), -1)
+            return ret
+
+        def adv_obj_grad(x):
+            # with respect to w:
+            ret = []
+            h = np.reshape(x[m + 1:], (n, m))
+            for j in range(m):
+                # classifier approximation of error on existing training dataset
+                tmp = sum([-1*self.train_labels[i] * self.train_dataset[i, j] *
+                          (1.0 if self.train_labels[i] * (np.dot(x[:m], self.train_dataset[i, :]) + x[m]) < 1.0 else 0.0)
+                           for i in range(n_e)])
+                # classifier approximation of error on new training points
+                tmp += sum([-1*new_train_labels[i] * (new_train_data[i, j] + h[i, j])*
+                           (1.0 if new_train_labels[i]*(np.dot(x[:m], new_train_data[i, :]+h[i, :])+x[m]) < 1.0 else 0.0)
+                           for i in range(n)])
+                # adversary approximation of error on test set
+                tmp += sum([self.test_labels[i] * self.test_dataset[i][j] *
+                           (1.0 if self.test_labels[i] * (np.dot(x[:m], self.test_dataset[i]) + x[m]) > -1.0 else 0.0)
+                           for i in range(0, n_t)])
+                ret.append(tmp)
+            # with respect to b:
+            ret.append(sum([-1*self.train_labels[i] *
+                       (1.0 if self.train_labels[i] * (np.dot(x[:m], self.train_dataset[i, :]) + x[m]) < 1.0 else 0.0)
+                       for i in range(n_e)]) + sum([-1 * new_train_labels[i] *
+                       (1.0 if new_train_labels[i] * (np.dot(x[:m], new_train_data[i, :]+h[i, :])+x[m]) < 1.0 else 0.0)
+                       for i in range(n)])+ sum([self.test_labels[i] * self.test_dataset[i][j] *
+                        (1.0 if self.test_labels[i] * (np.dot(x[:m], self.test_dataset[i]) + x[m]) > -1.0 else 0.0)
+                           for i in range(0, n_t)]))
+            # with respect t h:
+            der_h = np.array((n, m))
+            for i in range(n):
+                for j in range(m):
+                    der_h[i, j] = -1*new_train_labels[i]*x[j]*\
+                                  (1.0 if self.test_labels[i] * (np.dot(x[:m], self.test_dataset[i]) + x[m]) > -1.0 else 0.0)
+
+        def adv_constr(x):
+            h = np.reshape(x[m + 1:], (n, m))
+            ret = [n * self.eps ** 2 - sum([np.dot(h[i, :], h[i, :]) for i in range(n)])]
+            for i in range(n):
+                ret.append(sum(h[i, :]))
+            return np.array(ret)
+
+
         options = {'maxiter': 1000}
         sol = minimize(lambda x: self.adv_obj(x, new_train_data, new_train_labels),
                        x0, constraints=cons, options=options, method='COBYLA')
