@@ -70,7 +70,7 @@ class Classifier:
 
 
 class Adversary:
-    eps = 10
+    eps = 1
     a = 1.0
 
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels):
@@ -98,15 +98,16 @@ class Adversary:
 
         # classifier approximation of error on new training points
         for i in range(n):
-            ret+=max(1-labels[i]*(np.dot(w, dataset[i,:]+h[i,:])+b),0)/n
+            ret += max(1-labels[i]*(np.dot(w, dataset[i,:]+h[i,:])+b),0)/n
 
         # adversary approximation of error on test set
         n_t = len(self.test_labels)
         for i in range(n_t):
             ret += self.a*max(self.test_labels[i]*(np.dot(w, self.test_dataset[i, :])+b), -1)
+        return ret
 
     def adv_constr_ineq(self, x, n, m):
-        h = np.reshape(x[m+1:], (n,m))
+        h = np.reshape(x[m+1:], (n, m))
         return n*self.eps**2 - sum([np.dot(h[i, :], h[i, :]) for i in range(n)])
 
     def adv_constr_eq(self, x, n, m):
@@ -116,18 +117,19 @@ class Adversary:
             ret.append(sum(h[i, :]))
         return np.array(ret)
 
-    def get_attack(self, new_train_data, new_train_labels):
+    def get_infected_dataset(self, new_train_data, new_train_labels):
         n, m = np.shape(new_train_data)
+        print(n,'asdasd', m)
         x0 = np.zeros(m+1+n*m)
         x0[:m] = self.current_w
         x0[m] = self.current_b
         con1 = {'type': 'ineq', 'fun': lambda x: self.adv_constr_ineq(x, n, m)}
-        con2 = {'type': 'ineq', 'fun': lambda x: self.adv_constr_eq(x, n, m)}
+        con2 = {'type': 'ineq', 'fun': lambda x: self.adv_constr_eq(x, n, m)} ####
         cons = [con1, con2]
         options = {'maxiter': 1000}
         sol = minimize(lambda x: self.adv_obj(x, new_train_data, new_train_labels),
-                       x0, constraints=cons, options=options)
-        return np.reshape(sol.x[m+1:], (n, m))
+                       x0, constraints=cons, options=options, method='COBYLA')
+        return np.reshape(sol.x[m+1:], (n, m))+new_train_data, np.dot(sol.x[m+1:], sol.x[m+1:])/n
 
 
 

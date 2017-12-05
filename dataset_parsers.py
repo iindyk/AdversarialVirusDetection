@@ -75,22 +75,45 @@ def files2freq_pickle(folder_name, dictionary, valid_share, test_share):
     test_dataset = np.append(test_dataset, dataset[test_h_idx, :], axis=0)
     test_labels = np.append(test_labels, labels[test_h_idx], axis=0)
 
+    # shuffle datasets
+    train_idx_s = np.arange(len(train_labels))
+    np.random.shuffle(train_idx_s)
+    train_dataset_s = train_dataset[train_idx_s,:]
+    train_labels_s = train_labels[train_idx_s]
+    valid_idx_s = np.arange(len(valid_labels))
+    np.random.shuffle(valid_idx_s)
+    valid_dataset_s = valid_dataset[valid_idx_s, :]
+    valid_labels_s = valid_labels[valid_idx_s]
+    test_idx_s = np.arange(len(test_labels))
+    np.random.shuffle(test_idx_s)
+    test_dataset_s = test_dataset[test_idx_s, :]
+    test_labels_s = test_labels[test_idx_s]
+
     # save dataset to pickle
-    dataset_dict = {'train_dataset': train_dataset, 'train_labels': train_labels,
-                    'valid_dataset': valid_dataset, 'valid_labels': valid_labels,
-                    'test_dataset': test_dataset, 'test_labels': test_labels}
+    dataset_dict = {'train_dataset': train_dataset_s, 'train_labels': train_labels_s,
+                    'valid_dataset': valid_dataset_s, 'valid_labels': valid_labels_s,
+                    'test_dataset': test_dataset_s, 'test_labels': test_labels_s}
     pickle.dump(dataset_dict, open("dataset.p", "wb"))
 
 
 # read dataset from pickle
 def read_data():
     dataset_dict = pickle.load(open("dataset.p", "rb"))
-    train_dataset = dataset_dict['train_dataset']
-    train_labels = dataset_dict['train_labels']
-    valid_dataset = dataset_dict['valid_dataset']
-    valid_labels = dataset_dict['valid_labels']
-    test_dataset = dataset_dict['test_dataset']
-    test_labels = dataset_dict['test_labels']
+    train_dataset_bad = dataset_dict['train_dataset']
+    train_labels_bad = dataset_dict['train_labels']
+    train_zeros = np.where(train_labels_bad == 0)
+    train_dataset = np.delete(train_dataset_bad, train_zeros, axis=0)
+    train_labels = np.delete(train_labels_bad, train_zeros)
+    valid_dataset_bad = dataset_dict['valid_dataset']
+    valid_labels_bad = dataset_dict['valid_labels']
+    valid_zeros = np.where(valid_labels_bad == 0)
+    valid_dataset = np.delete(valid_dataset_bad, valid_zeros, axis=0)
+    valid_labels = np.delete(valid_labels_bad, valid_zeros)
+    test_dataset_bad = dataset_dict['test_dataset']
+    test_labels_bad = dataset_dict['test_labels']
+    test_zeros = np.where(test_labels_bad == 0)
+    test_dataset = np.delete(test_dataset_bad, test_zeros, axis=0)
+    test_labels = np.delete(test_labels_bad, test_zeros)
     return train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels
 
 
