@@ -3,6 +3,8 @@ import numpy as np
 from scipy.optimize import minimize
 from sklearn.metrics import accuracy_score
 from memory_profiler import profile
+import pyipopt
+import datetime
 
 
 class Classifier:
@@ -137,7 +139,7 @@ class Adversary:
                        (1.0 if self.train_labels[i] * (np.dot(x[:m], self.train_dataset[i, :]) + x[m]) < 1.0 else 0.0)
                        for i in range(n_e)]) + sum([-1 * new_train_labels[i] *
                        (1.0 if new_train_labels[i] * (np.dot(x[:m], new_train_data[i, :]+h[i, :])+x[m]) < 1.0 else 0.0)
-                       for i in range(n)])+ sum([self.test_labels[i] * self.test_dataset[i][j] *
+                       for i in range(n)])+ sum([self.test_labels[i] *
                         (1.0 if self.test_labels[i] * (np.dot(x[:m], self.test_dataset[i]) + x[m]) > -1.0 else 0.0)
                            for i in range(0, n_t)]))
             # with respect t h:
@@ -146,6 +148,12 @@ class Adversary:
                 for j in range(m):
                     der_h[i, j] = -1*new_train_labels[i]*x[j]*\
                                   (1.0 if self.test_labels[i] * (np.dot(x[:m], self.test_dataset[i]) + x[m]) > -1.0 else 0.0)
+            return np.append(np.array(ret), np.reshape(der_h, (-1)))
+
+        nvar = m+1+n*m  # number of variables
+        ncon = n+1  # number of constraints
+        nnzj = ncon * nvar  # number of nonzero elements in Jacobian of constraints function
+        nnzh = nvar ** 2  # number of nonzero elements in Hessian of Lagrangian
 
         def adv_constr(x):
             h = np.reshape(x[m + 1:], (n, m))
@@ -154,11 +162,63 @@ class Adversary:
                 ret.append(sum(h[i, :]))
             return np.array(ret)
 
+        def adv_constr_jac(x):
+            ret = np.zeros((n+1, m+1+n*m))
+            # gradient of norm constraint
+            for i in range(n*m):
+                ret[0, i] = -2*x[m+1+i]
+            # jacobian of affine constraints:
+            for i in range(n):
+                der_h = np.zeros((n, m))
+                der_h[i, :] = 1.0
+                ret[i+1, m+1:] = np.reshape(der_h, (-1))
+            return ret
 
-        options = {'maxiter': 1000}
-        sol = minimize(lambda x: self.adv_obj(x, new_train_data, new_train_labels),
-                       x0, constraints=cons, options=options, method='COBYLA')
-        return np.reshape(sol.x[m+1:], (n, m))+new_train_data, np.dot(sol.x[m+1:], sol.x[m+1:])/n
+        def eval_jac_g(x, flag):
+            if flag:
+                i_s = []
+                j_s = []
+                for i in range(ncon):
+                    for j in range(nvar):
+                        i_s.append(i)
+                        j_s.append(j)
+                return np.array(i_s), np.array(j_s)
+            else:
+                jac = adv_constr_jac(x)
+                assert np.shape(jac) == (ncon, nvar)
+                ret = []
+                for i in range(ncon):
+                    for j in range(nvar):
+                        ret.append(jac[i, j])
+                return np.array(ret)
+        x_L = np.zeros(nvar)
+        x_U = np.zeros(nvar)
+        x_L[:m+1] = -100.0
+        x_L[m+1:] = -1*self.eps*n
+        x_U[:m+1] = 100.0
+        x_U[m+1:] = self.eps*n
+        g_L = np.zeros(ncon)
+        g_U = np.zeros(ncon)
+        g_U[0] = n*self.eps/100  # figure something out
+
+        nlp = pyipopt.create(nvar, x_L, x_U, ncon, g_L, g_U, nnzj, nnzh, adv_obj,
+                             adv_obj_grad, adv_constr, eval_jac_g)
+        nlp.str_option("derivative_test", "none")
+        nlp.str_option('derivative_test_print_all', 'no')
+
+        nlp.num_option('derivative_test_perturbation', 1e-8)
+        nlp.num_option('tol', 1e-4)
+        nlp.num_option('acceptable_constr_viol_tol', 0.1)
+
+        nlp.int_option('max_iter', 3000)
+        nlp.int_option('print_frequency_iter', 100)
+
+        print(datetime.datetime.now(), ": Going to call solve")
+        x_opt, zl, zu, constraint_multipliers, obj, status = nlp.solve(x0)
+        nlp.close()
+        print('status: ', status)
+
+        return np.reshape(x_opt[m+1:], (n, m))+new_train_data, np.dot(x_opt[m+1:], x_opt[m+1:])/n
 
 
 
