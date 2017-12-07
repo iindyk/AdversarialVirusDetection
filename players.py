@@ -113,7 +113,7 @@ class Adversary:
 
             # adversary approximation of error on test set
             for i in range(n_t):
-                ret += self.a * max(self.test_labels[i] * (np.dot(w, self.test_dataset[i, :]) + b), -1)
+                ret += self.a * max(self.test_labels[i] * (np.dot(w, self.test_dataset[i, :]) + b), -1) / n_t
             return ret
 
         def adv_obj_grad(x):
@@ -124,49 +124,50 @@ class Adversary:
                 # classifier approximation of error on existing training dataset
                 tmp = sum([-1*self.train_labels[i] * self.train_dataset[i, j] *
                           (1.0 if self.train_labels[i] * (np.dot(x[:m], self.train_dataset[i, :]) + x[m]) < 1.0 else 0.0)
-                           for i in range(n_e)])
+                           for i in range(n_e)]) / n_e
                 # classifier approximation of error on new training points
                 tmp += sum([-1*new_train_labels[i] * (new_train_data[i, j] + h[i, j])*
                            (1.0 if new_train_labels[i]*(np.dot(x[:m], new_train_data[i, :]+h[i, :])+x[m]) < 1.0 else 0.0)
-                           for i in range(n)])
+                           for i in range(n)]) / n
                 # adversary approximation of error on test set
-                tmp += sum([self.test_labels[i] * self.test_dataset[i][j] *
+                tmp += self.a * sum([self.test_labels[i] * self.test_dataset[i][j] *
                            (1.0 if self.test_labels[i] * (np.dot(x[:m], self.test_dataset[i]) + x[m]) > -1.0 else 0.0)
-                           for i in range(0, n_t)])
+                           for i in range(0, n_t)]) / n_t
                 ret.append(tmp)
             # with respect to b:
             ret.append(sum([-1*self.train_labels[i] *
                        (1.0 if self.train_labels[i] * (np.dot(x[:m], self.train_dataset[i, :]) + x[m]) < 1.0 else 0.0)
-                       for i in range(n_e)]) + sum([-1 * new_train_labels[i] *
+                       for i in range(n_e)])/n_e + sum([-1 * new_train_labels[i] *
                        (1.0 if new_train_labels[i] * (np.dot(x[:m], new_train_data[i, :]+h[i, :])+x[m]) < 1.0 else 0.0)
-                       for i in range(n)])+ sum([self.test_labels[i] *
-                        (1.0 if self.test_labels[i] * (np.dot(x[:m], self.test_dataset[i]) + x[m]) > -1.0 else 0.0)
-                           for i in range(0, n_t)]))
-            # with respect t h:
-            der_h = np.array((n, m))
+                       for i in range(n)])/n + self.a *sum([self.test_labels[i] *
+                        (1.0 if self.test_labels[i] * (np.dot(x[:m], self.test_dataset[i, :]) + x[m]) > -1.0 else 0.0)
+                           for i in range(0, n_t)])/n_t)
+            # with respect to h:
+            der_h = np.zeros((n, m))
             for i in range(n):
                 for j in range(m):
-                    der_h[i, j] = -1*new_train_labels[i]*x[j]*\
-                                  (1.0 if self.test_labels[i] * (np.dot(x[:m], self.test_dataset[i]) + x[m]) > -1.0 else 0.0)
+                    der_h[i, j] = -1*new_train_labels[i]*x[j]*(1.0 if new_train_labels[i] * (
+                                  np.dot(x[:m], new_train_data[i, :] + h[i, :]) + x[m]) < 1.0 else 0.0) / n
             return np.append(np.array(ret), np.reshape(der_h, (-1)))
 
         nvar = m+1+n*m  # number of variables
         ncon = n+1  # number of constraints
         nnzj = ncon * nvar  # number of nonzero elements in Jacobian of constraints function
-        nnzh = nvar ** 2  # number of nonzero elements in Hessian of Lagrangian
+        nnzh = 0  # number of nonzero elements in Hessian of Lagrangian
 
         def adv_constr(x):
             h = np.reshape(x[m + 1:], (n, m))
-            ret = [n * self.eps ** 2 - sum([np.dot(h[i, :], h[i, :]) for i in range(n)])]
+            ret = np.zeros(n+1)
+            ret[0] = n * self.eps ** 2 - np.dot(x[m+1:], x[m+1:])
             for i in range(n):
-                ret.append(sum(h[i, :]))
+                ret[i+1] = sum(h[i, :])
             return np.array(ret)
 
         def adv_constr_jac(x):
             ret = np.zeros((n+1, m+1+n*m))
             # gradient of norm constraint
-            for i in range(n*m):
-                ret[0, i] = -2*x[m+1+i]
+            for i in range(m+1, n*m+m+1):
+                ret[0, i] = -2*x[i]
             # jacobian of affine constraints:
             for i in range(n):
                 der_h = np.zeros((n, m))
@@ -178,18 +179,30 @@ class Adversary:
             if flag:
                 i_s = []
                 j_s = []
-                for i in range(ncon):
-                    for j in range(nvar):
-                        i_s.append(i)
-                        j_s.append(j)
+                for i in range(m + 1, n * m + m + 1):
+                    i_s.append(0)
+                    j_s.append(i)
+                for i in range(n):
+                    for j in range(m):
+                        i_s.append(i+1)
+                        j_s.append(m+1+i*m+j)
+                #for i in range(ncon):
+                #    for j in range(nvar):
+                #        i_s.append(i)
+                #        j_s.append(j)
                 return np.array(i_s), np.array(j_s)
             else:
                 jac = adv_constr_jac(x)
                 assert np.shape(jac) == (ncon, nvar)
                 ret = []
-                for i in range(ncon):
-                    for j in range(nvar):
-                        ret.append(jac[i, j])
+                for i in range(m + 1, n * m + m + 1):
+                    ret.append(jac[0, i])
+                for i in range(n):
+                    for j in range(m):
+                        ret.append(jac[i+1, m+1+i*m+j])
+                #for i in range(ncon):
+                #    for j in range(nvar):
+                #        ret.append(jac[i, j])
                 return np.array(ret)
         x_L = np.zeros(nvar)
         x_U = np.zeros(nvar)
@@ -199,19 +212,18 @@ class Adversary:
         x_U[m+1:] = self.eps*n
         g_L = np.zeros(ncon)
         g_U = np.zeros(ncon)
-        g_U[0] = n*self.eps/100  # figure something out
+        g_U[0] = n*self.eps  # figure something out
 
         nlp = pyipopt.create(nvar, x_L, x_U, ncon, g_L, g_U, nnzj, nnzh, adv_obj,
                              adv_obj_grad, adv_constr, eval_jac_g)
-        nlp.str_option("derivative_test", "none")
-        nlp.str_option('derivative_test_print_all', 'no')
+        nlp.str_option("derivative_test", "first-order")
 
-        nlp.num_option('derivative_test_perturbation', 1e-8)
+        nlp.num_option('derivative_test_tol', 1e-2)
         nlp.num_option('tol', 1e-4)
         nlp.num_option('acceptable_constr_viol_tol', 0.1)
 
-        nlp.int_option('max_iter', 3000)
-        nlp.int_option('print_frequency_iter', 100)
+        nlp.int_option('max_iter', 1000)
+        nlp.int_option('print_frequency_iter', 1)
 
         print(datetime.datetime.now(), ": Going to call solve")
         x_opt, zl, zu, constraint_multipliers, obj, status = nlp.solve(x0)

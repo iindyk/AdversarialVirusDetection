@@ -114,7 +114,7 @@ def read_data():
     test_zeros = np.where(test_labels_bad == 0)
     test_dataset = np.delete(test_dataset_bad, test_zeros, axis=0)
     test_labels = np.delete(test_labels_bad, test_zeros)
-    return train_dataset[:, :100], train_labels, valid_dataset[:, :100], valid_labels, test_dataset[:, :100], test_labels
+    return train_dataset[:, :10], train_labels, valid_dataset[:, :10], valid_labels, test_dataset[:, :10], test_labels
 
 
 # create dictionary of used opcode commands
