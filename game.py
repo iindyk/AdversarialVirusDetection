@@ -11,6 +11,8 @@ train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_lab
 steps = np.arange(n_initial, len(train_labels), int(np.ceil((len(train_labels)-n_initial)/n_steps)))
 classifier = pl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
                            , valid_dataset, valid_labels, C)
+err_test = 1 - accuracy_score(test_labels, classifier.predict(test_dataset))
+print('classifier: initiated, error on test dataset is ', err_test)
 adversary = pl.Adversary(train_dataset[:n_initial, :], train_labels[:n_initial], test_dataset, test_labels)
 
 for i in range(n_steps):

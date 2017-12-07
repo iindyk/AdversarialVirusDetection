@@ -8,7 +8,7 @@ import datetime
 
 
 class Classifier:
-    crit_val = 2
+    crit_val = 0.5
 
     def __init__(self, train_dataset, train_labels, valid_dataset, valid_labels, C):
         self.svc = svm.SVC(kernel='linear', C=C).fit(train_dataset, train_labels)
@@ -74,7 +74,7 @@ class Classifier:
 
 
 class Adversary:
-    eps = 10
+    eps = 1
     a = 1.0
 
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels):
@@ -89,7 +89,7 @@ class Adversary:
         self.train_dataset = np.append(self.train_dataset, new_train_data, axis=0)
         self.train_labels = np.append(self.train_labels, new_train_labels)
 
-    @profile
+    #@profile
     def get_infected_dataset(self, new_train_data, new_train_labels):
         n, m = np.shape(new_train_data)
         x0 = np.zeros(m+1+n*m)
@@ -221,10 +221,10 @@ class Adversary:
         nlp.num_option('derivative_test_tol', 1e-2)
         nlp.num_option('tol', 1e-3)
         nlp.num_option('acceptable_constr_viol_tol', 0.1)
-        nlp.num_option('print_level', 0)
 
+        nlp.int_option('print_level', 0)
         nlp.int_option('max_iter', 1000)
-        nlp.int_option('print_frequency_iter', 1)
+        nlp.int_option('print_frequency_iter', 10)
 
         print(datetime.datetime.now(), ": Going to call solve")
         x_opt, zl, zu, constraint_multipliers, obj, status = nlp.solve(x0)
