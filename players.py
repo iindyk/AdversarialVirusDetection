@@ -8,7 +8,7 @@ import datetime
 
 
 class Classifier:
-    crit_val = 10
+    crit_val = 2
 
     def __init__(self, train_dataset, train_labels, valid_dataset, valid_labels, C):
         self.svc = svm.SVC(kernel='linear', C=C).fit(train_dataset, train_labels)
@@ -152,7 +152,7 @@ class Adversary:
 
         nvar = m+1+n*m  # number of variables
         ncon = n+1  # number of constraints
-        nnzj = ncon * nvar  # number of nonzero elements in Jacobian of constraints function
+        nnzj = n*m*2  # number of nonzero elements in Jacobian of constraints function
         nnzh = 0  # number of nonzero elements in Hessian of Lagrangian
 
         def adv_constr(x):
@@ -216,11 +216,12 @@ class Adversary:
 
         nlp = pyipopt.create(nvar, x_L, x_U, ncon, g_L, g_U, nnzj, nnzh, adv_obj,
                              adv_obj_grad, adv_constr, eval_jac_g)
-        nlp.str_option("derivative_test", "first-order")
+        nlp.str_option("derivative_test", "none")
 
         nlp.num_option('derivative_test_tol', 1e-2)
-        nlp.num_option('tol', 1e-4)
+        nlp.num_option('tol', 1e-3)
         nlp.num_option('acceptable_constr_viol_tol', 0.1)
+        nlp.num_option('print_level', 0)
 
         nlp.int_option('max_iter', 1000)
         nlp.int_option('print_frequency_iter', 1)
@@ -230,7 +231,7 @@ class Adversary:
         nlp.close()
         print('status: ', status)
 
-        return np.reshape(x_opt[m+1:], (n, m))+new_train_data, np.dot(x_opt[m+1:], x_opt[m+1:])/n
+        return np.reshape(x_opt[m+1:], (n, m))+new_train_data, np.sqrt(np.dot(x_opt[m+1:], x_opt[m+1:])/n)
 
 
 
