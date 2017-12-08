@@ -8,7 +8,7 @@ import datetime
 
 
 class Classifier:
-    crit_val = 0.5
+    crit_val = 30
 
     def __init__(self, train_dataset, train_labels, valid_dataset, valid_labels, C):
         self.svc = svm.SVC(kernel='linear', C=C).fit(train_dataset, train_labels)
@@ -65,7 +65,8 @@ class Classifier:
                 test_stat_v += np.linalg.norm(train_dataset[i,:]-train_dataset[j,:])/(2*len(valid_v_indeces)**2)
         test_stat_v *= len(train_v_indeces)*len(valid_v_indeces)/(len(train_v_indeces)+len(valid_v_indeces))
 
-        return test_stat_h+test_stat_v > self.crit_val
+        print('classifier: test performed, statistics value is ', test_stat_h+test_stat_v)
+        return test_stat_h+test_stat_v < self.crit_val
 
     def partial_fit(self, new_train_dataset, new_train_labels):
         self.train_dataset = np.append(self.train_dataset, new_train_dataset, axis=0)

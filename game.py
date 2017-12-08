@@ -15,7 +15,7 @@ err_test = 1 - accuracy_score(test_labels, classifier.predict(test_dataset))
 print('classifier: initiated, error on test dataset is ', err_test)
 adversary = pl.Adversary(train_dataset[:n_initial, :], train_labels[:n_initial], test_dataset, test_labels)
 
-for i in range(n_steps):
+for i in range(n_steps-1):
     print('step #', i)
     new_train_dataset = train_dataset[steps[i]:steps[i+1], :]
     new_train_labels = train_labels[steps[i]:steps[i+1]]
