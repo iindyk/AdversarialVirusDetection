@@ -1,6 +1,5 @@
 import sklearn.svm as svm
 import numpy as np
-from scipy.optimize import minimize
 from sklearn.metrics import accuracy_score
 from memory_profiler import profile
 import pyipopt
@@ -8,15 +7,18 @@ import datetime
 
 
 class Classifier:
-    crit_val = 30
 
-    def __init__(self, train_dataset, train_labels, valid_dataset, valid_labels, C):
+    def __init__(self, train_dataset, train_labels, valid_dataset, valid_labels, C, crit_val, crit_val_alg='const'):
         self.svc = svm.SVC(kernel='linear', C=C).fit(train_dataset, train_labels)
         self.train_dataset = train_dataset
         self.train_labels = train_labels
         self.valid_dataset = valid_dataset
         self.valid_labels = valid_labels
         self.C = C
+        self.val_errors = []
+        self.val_errors.append(1 - accuracy_score(self.valid_labels, self.svc.predict(self.valid_dataset)))
+        self.crit_val = crit_val
+        self.crit_val_alg = crit_val_alg
         # part of test statistics
         self.part_test_stat_h = 0.0
         h_indeces = np.where(valid_labels == 1)
@@ -47,7 +49,6 @@ class Classifier:
         valid_v_indeces = np.where(self.valid_labels == -1)[0]
 
         # harmless points
-        print(np.shape(train_h_indeces))
         for i in train_h_indeces:
             for j in valid_h_indeces:
                 test_stat_h += np.linalg.norm(train_dataset[i,:]-self.valid_dataset[j,:])/(len(train_h_indeces)*len(valid_h_indeces))
@@ -72,10 +73,17 @@ class Classifier:
         self.train_dataset = np.append(self.train_dataset, new_train_dataset, axis=0)
         self.train_labels = np.append(self.train_labels, new_train_labels)
         self.svc = svm.SVC(kernel='linear', C=self.C).fit(self.train_dataset, self.train_labels)
+        self.val_errors.append(1 - accuracy_score(self.valid_labels, self.svc.predict(self.valid_dataset)))
+        if self.crit_val_alg=='desc' and self.val_errors[len(self.val_errors)-1]<self.val_errors[len(self.val_errors)-2]:
+            self.crit_val = self.crit_val*0.9
+            print('     decreasing crit_val to ',self.crit_val)
+        elif self.crit_val_alg=='asc' and self.val_errors[len(self.val_errors)-1]<self.val_errors[len(self.val_errors)-2]:
+            self.crit_val = self.crit_val * 1.1
+            print('     increasing crit_val to ', self.crit_val)
 
 
 class Adversary:
-    eps = 1
+    eps = 0.3
     a = 1.0
 
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels):
