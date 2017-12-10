@@ -19,6 +19,7 @@ class Classifier:
         self.val_errors.append(1 - accuracy_score(self.valid_labels, self.svc.predict(self.valid_dataset)))
         self.crit_val = crit_val
         self.crit_val_alg = crit_val_alg
+        self.test_results = []
         # part of test statistics
         self.part_test_stat_h = 0.0
         h_indeces = np.where(valid_labels == 1)
@@ -67,6 +68,10 @@ class Classifier:
         test_stat_v *= len(train_v_indeces)*len(valid_v_indeces)/(len(train_v_indeces)+len(valid_v_indeces))
 
         print('classifier: test performed, statistics value is ', test_stat_h+test_stat_v)
+        if test_stat_h+test_stat_v > self.crit_val and self.crit_val_alg=='asc' and len(self.test_results)>1:
+            if not self.test_results[len(self.test_results)-1] and not self.test_results[len(self.test_results)-2]:
+                self.crit_val = self.crit_val * 1.1
+        self.test_results.append(test_stat_h+test_stat_v < self.crit_val)
         return test_stat_h+test_stat_v < self.crit_val
 
     def partial_fit(self, new_train_dataset, new_train_labels):
@@ -232,7 +237,7 @@ class Adversary:
         nlp.num_option('acceptable_constr_viol_tol', 0.1)
 
         nlp.int_option('print_level', 0)
-        nlp.int_option('max_iter', 1000)
+        nlp.int_option('max_iter', 300)
         nlp.int_option('print_frequency_iter', 10)
 
         print(datetime.datetime.now(), ": Going to call solve")
