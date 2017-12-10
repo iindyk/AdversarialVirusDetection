@@ -64,8 +64,10 @@ for i in range(len(steps)-1):
         if classifiers[j].is_valid(new_infected_data, new_train_labels):
             print('classifier'+str(j+1)+': data is valid, adding to training set')
             classifiers[j].partial_fit(new_infected_data, new_train_labels)
+            adversary.eps = adversary.eps*1.1
         else:
             print('classifier'+str(j+1)+': data is not valid, disregarding')
+            adversary.eps = adversary.eps*0.9
         # todo: strategy for classifier.crit_value & adversary.eps change
         test_errs[j, i+1] = 1 - accuracy_score(test_labels, classifiers[j].predict(test_dataset))
     adversary.add_train_data(new_infected_data, new_train_labels)

@@ -77,13 +77,13 @@ class Classifier:
         if self.crit_val_alg=='desc' and self.val_errors[len(self.val_errors)-1]<self.val_errors[len(self.val_errors)-2]:
             self.crit_val = self.crit_val*0.9
             print('     decreasing crit_val to ',self.crit_val)
-        elif self.crit_val_alg=='asc' and self.val_errors[len(self.val_errors)-1]<self.val_errors[len(self.val_errors)-2]:
+        elif self.crit_val_alg=='asc' and self.val_errors[len(self.val_errors)-1]>self.val_errors[len(self.val_errors)-2]:
             self.crit_val = self.crit_val * 1.1
             print('     increasing crit_val to ', self.crit_val)
 
 
 class Adversary:
-    eps = 0.3
+    eps = 0.4
     a = 1.0
 
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels):
