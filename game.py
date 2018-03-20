@@ -1,4 +1,4 @@
-import dataset_parsers as dp
+from data import dataset_parsers as dp
 import players as pl
 import numpy as np
 from sklearn.metrics import accuracy_score
