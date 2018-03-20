@@ -1,0 +1,11 @@
+#!/bin/bash
+i=0
+for f in files/harmless/*; do
+	objdump -d "$f" > "dumps/harmless/h$i.txt"
+	if [ ! -s "dumps/harmless/h$i.txt" ];
+	then
+		rm -f  "dumps/harmless/h$i.txt"
+		rm -f "$f";
+	fi;
+	i=$((i+1))
+done
