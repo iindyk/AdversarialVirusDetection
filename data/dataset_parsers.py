@@ -93,12 +93,12 @@ def files2freq_pickle(folder_name, dictionary, valid_share, test_share):
     dataset_dict = {'train_dataset': train_dataset_s, 'train_labels': train_labels_s,
                     'valid_dataset': valid_dataset_s, 'valid_labels': valid_labels_s,
                     'test_dataset': test_dataset_s, 'test_labels': test_labels_s}
-    pickle.dump(dataset_dict, open("dataset.p", "wb"))
+    pickle.dump(dataset_dict, open("/home/iindyk/PycharmProjects/AdversarialVirusDetection/data/dataset.p", "wb"))
 
 
 # read dataset from pickle
 def read_data():
-    dataset_dict = pickle.load(open("dataset.p", "rb"))
+    dataset_dict = pickle.load(open("/home/iindyk/PycharmProjects/AdversarialVirusDetection/data/dataset.p", "rb"))
     train_dataset_bad = dataset_dict['train_dataset']
     train_labels_bad = dataset_dict['train_labels']
     train_zeros = np.where(train_labels_bad == 0)
@@ -121,7 +121,7 @@ def read_data():
 def create_dictionary():
     dictionary = {}
 
-    directory_in_str_v = '/home/iindyk/PycharmProjects/AdversarialVirusDetection/dumps/viruses'
+    directory_in_str_v = '/home/iindyk/PycharmProjects/AdversarialVirusDetection/data/dumps/viruses'
     for file in os.listdir(os.fsencode(directory_in_str_v)):
         filename = os.fsdecode(file)
         f = open(directory_in_str_v+'/'+filename, 'r')
@@ -137,7 +137,7 @@ def create_dictionary():
                 dictionary[word] = 1
         f.close()
 
-    directory_in_str_h = '/home/iindyk/PycharmProjects/AdversarialVirusDetection/dumps/harmless'
+    directory_in_str_h = '/home/iindyk/PycharmProjects/AdversarialVirusDetection/data/dumps/harmless'
     for file in os.listdir(os.fsencode(directory_in_str_h)):
         filename = os.fsdecode(file)
         f = open(directory_in_str_h + '/' + filename, 'r')
@@ -168,7 +168,7 @@ def create_dictionary():
     final_dict.remove('da')
     final_dict.append('int3')
 
-    dictionary_file = open('/home/iindyk/PycharmProjects/AdversarialVirusDetection/dictionary.txt', 'w')
+    dictionary_file = open('/home/iindyk/PycharmProjects/AdversarialVirusDetection/data/dictionary.txt', 'w')
     for word in final_dict:
         dictionary_file.write("%s\n" % word)
     dictionary_file.close()

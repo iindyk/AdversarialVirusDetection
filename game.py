@@ -46,7 +46,8 @@ print('classifier5: initiated, error on test dataset is ', err_test5)
 classifiers.append(classifier5)
 
 
-adversary = pl.Adversary(train_dataset[:n_initial, :], train_labels[:n_initial], test_dataset, test_labels)
+adversary = pl.Adversary(train_dataset[:n_initial, :], train_labels[:n_initial], test_dataset, test_labels,
+                         len(train_dataset[0]))
 test_errs = np.zeros((len(classifiers), len(steps)))
 test_errs[0,0] = err_test1
 test_errs[1,0] = err_test2
