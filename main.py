@@ -2,6 +2,8 @@ from data import dataset_parsers as dp
 import sklearn.svm as svm
 from sklearn.metrics import accuracy_score
 import players as pl
+import numpy as np
+import graph_2dim_results as gr
 
 # saving data to pickle file
 # filename = "/home/iindyk/PycharmProjects/AdversarialVirusDetection/data/dictionary.txt"
@@ -23,14 +25,26 @@ import players as pl
 
 # testing one time adversarial attack
 C = 1.0
-train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels = dp.read_data()
-train_dataset = train_dataset[:1000, :]
-train_labels = train_labels[:1000]
+n = 1000
+m = 2
+train_dataset, train_labels, test_dataset, test_labels = dp.get_toy_dataset(n, m)
 svm_orig = svm.SVC(kernel='linear', C=C).fit(train_dataset, train_labels)
-err_orig = 1 - accuracy_score(test_labels, svm_orig.predict(test_dataset))
-adversary = pl.Adversary(None, None, test_dataset, test_labels, len(train_dataset[0]))
+err_orig = 1 - accuracy_score(test_labels, svm_orig.predict(train_dataset))
+adversary = pl.Adversary(None, None, train_dataset, train_labels, len(train_dataset[0]))
 train_dataset_infected, _ = adversary.get_infected_dataset(train_dataset, train_labels)
 svm_infected = svm.SVC(kernel='linear', C=C).fit(train_dataset_infected, train_labels)
 err_infected = 1 - accuracy_score(test_labels, svm_infected.predict(test_dataset))
 print('err by orig svm is ', err_orig)
 print('err by infected svm is ', err_infected)
+colors = []
+inf_points = []
+for i in range(int(0.5*n)):
+    if train_labels[i]==1:
+        colors.append((1, 0, 0))
+    else:
+        colors.append((0, 0, 1))
+    if np.linalg.norm(train_dataset_infected[i]-train_dataset[i])>0.01:
+        inf_points.append(i)
+
+gr.graph_results(0, 1,train_dataset, train_labels, train_dataset_infected, inf_points,
+                 colors, svm_orig, svm_infected)

@@ -1,6 +1,7 @@
 import os
 import pickle
 import numpy as np
+from random import uniform, randint
 
 
 # convert opcode txt file to dictionary of frequencies
@@ -174,6 +175,24 @@ def create_dictionary():
     dictionary_file.close()
     print(len(final_dict))
     print(final_dict)
+
+
+def get_toy_dataset(n, m):
+    dataset = np.random.uniform(0, 1, (n, m))
+    labels = []
+    for i in range(n):
+        if sum(dataset[i, :]) > 0.5*m:
+            labels.append(1)
+        else:
+            labels.append(-1)
+    # random attack
+    for i in range(int(0.1*n)):
+        k = randint(0, n)
+        if labels[k] == 1:
+            labels[k] = -1
+        else:
+            labels[k] = 1
+    return dataset[:int(0.5*n), :], labels[:int(0.5*n)], dataset[int(0.5*n):, :], labels[int(0.5*n):]
 
 
 
