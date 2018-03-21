@@ -187,7 +187,7 @@ def get_toy_dataset(n, m):
             labels.append(-1)
     # random attack
     for i in range(int(0.1*n)):
-        k = randint(0, n)
+        k = randint(0, n-1)
         if labels[k] == 1:
             labels[k] = -1
         else:

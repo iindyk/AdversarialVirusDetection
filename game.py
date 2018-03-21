@@ -1,5 +1,6 @@
 from data import dataset_parsers as dp
-import players as pl
+import classifier as cl
+import adversary_ipopt as adv
 import numpy as np
 from sklearn.metrics import accuracy_score
 import sklearn.svm as svm
@@ -15,38 +16,38 @@ err_best = 1 - accuracy_score(test_labels, svm1.predict(test_dataset))
 print('best possible performance on test dataset is ', err_best)
 classifiers = []
 
-classifier1 = pl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
+classifier1 = cl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
                            , valid_dataset, valid_labels, C, 10)
 err_test1 = 1 - accuracy_score(test_labels, classifier1.predict(test_dataset))
 print('classifier1: initiated, error on test dataset is ', err_test1)
 classifiers.append(classifier1)
 
-classifier2 = pl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
+classifier2 = cl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
                            , valid_dataset, valid_labels, C, 20)
 err_test2 = 1 - accuracy_score(test_labels, classifier2.predict(test_dataset))
 print('classifier2: initiated, error on test dataset is ', err_test2)
 classifiers.append(classifier2)
 
-classifier3 = pl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
+classifier3 = cl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
                            , valid_dataset, valid_labels, C, 30)
 err_test3 = 1 - accuracy_score(test_labels, classifier3.predict(test_dataset))
 print('classifier3: initiated, error on test dataset is ', err_test3)
 classifiers.append(classifier3)
 
-classifier4 = pl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
+classifier4 = cl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
                            , valid_dataset, valid_labels, C, 10, 'asc')
 err_test4 = 1 - accuracy_score(test_labels, classifier4.predict(test_dataset))
 print('classifier4: initiated, error on test dataset is ', err_test4)
 classifiers.append(classifier4)
 
-classifier5 = pl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
+classifier5 = cl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
                            , valid_dataset, valid_labels, C, 30, 'desc')
 err_test5 = 1 - accuracy_score(test_labels, classifier5.predict(test_dataset))
 print('classifier5: initiated, error on test dataset is ', err_test5)
 classifiers.append(classifier5)
 
 
-adversary = pl.Adversary(train_dataset[:n_initial, :], train_labels[:n_initial], test_dataset, test_labels,
+adversary = adv.Adversary(train_dataset[:n_initial, :], train_labels[:n_initial], test_dataset, test_labels,
                          len(train_dataset[0]))
 test_errs = np.zeros((len(classifiers), len(steps)))
 test_errs[0,0] = err_test1
