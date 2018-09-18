@@ -9,7 +9,6 @@ class Adversary:
     eps = 0.1
     a = 1.0
 
-
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels, dim):
         self.train_dataset = initial_train_dataset
         self.train_labels = initial_train_labels
