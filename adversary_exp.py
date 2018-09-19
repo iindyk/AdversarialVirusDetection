@@ -24,9 +24,7 @@ class Adversary:
     def get_support_points_split(self, n):
         # todo: come up with a better algorithm
         if n == 1:
-            yield [[0], [], []]
             yield [[], [0], []]
-            yield [[], [], [0]]
             raise StopIteration
         else:
             for support_ineq, support_eq, non_support in self.get_support_points_split(n-1):
@@ -37,18 +35,18 @@ class Adversary:
     # @profile
     def get_infected_dataset(self, new_train_data, new_train_labels):
         n, m = np.shape(new_train_data)
-        svc = SVC(C=self.a)
+        svc = SVC(C=self.a, kernel='linear')
         svc.fit(new_train_data, new_train_labels)
         w_old = svc.coef_[0]
         b_old = svc.intercept_
 
-        for support_ineq, support_eq, non_support in self.get_support_points_split(new_train_data):
-            sup_ineq_data = new_train_data[support_ineq]
-            sup_ineq_labels = new_train_labels[support_ineq]
-            sup_eq_data = new_train_data[support_eq]
-            sup_eq_labels = new_train_labels[support_eq]
-            non_sup_data = new_train_data[non_support]
-            non_sup_labels = new_train_labels[non_support]
+        for support_ineq, support_eq, non_support in self.get_support_points_split(len(new_train_data)):
+            sup_ineq_data = [new_train_data[i] for i in support_ineq]
+            sup_ineq_labels = [new_train_labels[i] for i in support_ineq]
+            sup_eq_data = [new_train_data[i] for i in support_eq]
+            sup_eq_labels = [new_train_labels[i] for i in support_eq]
+            non_sup_data = [new_train_data[i] for i in non_support]
+            non_sup_labels = [new_train_labels[i] for i in non_support]
 
             w = cvx.Variable(m)
             b = cvx.Variable()
@@ -61,8 +59,6 @@ class Adversary:
             cons = [z >= -1,
                     l >= 0,
                     l <= self.a,    # todo: double check
-                    w == cvx.sum([l[i]*sup_eq_labels[i]*sup_eq_data[i] for i in len(support_eq)] +
-                                 sum([self.a*sup_ineq_labels[i]*sup_ineq_data[i] for i in len(support_ineq)])),
                     l*sup_eq_labels + self.a*sum(sup_ineq_labels) == 0,
                     cvx.norm(g) <= self.eps,
                     w*w_old >= 0.5]
@@ -75,5 +71,10 @@ class Adversary:
                 else:
                     cons.append(new_train_labels[i] * (w * new_train_data[i] + g[i] + b) >= 1)
 
+            for j in range(m):
+                cons.append(w[j] == cvx.sum([l[i]*sup_eq_labels[i]*sup_eq_data[i][j] for i in range(len(support_eq))]) +
+                                 sum([self.a*sup_ineq_labels[i]*sup_ineq_data[i][j] for i in range(len(support_ineq))]))
+
             prob = cvx.Problem(obj, cons)
             prob.solve()
+            print(prob.value)
