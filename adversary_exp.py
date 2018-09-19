@@ -6,7 +6,7 @@ from sklearn.svm import SVC
 
 
 class Adversary:
-    eps = 0.1
+    eps = 0.2
     a = 1.0
 
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels, dim):
@@ -21,13 +21,32 @@ class Adversary:
         self.train_dataset = np.append(self.train_dataset, new_train_data, axis=0)
         self.train_labels = np.append(self.train_labels, new_train_labels)
 
-    def get_support_points_split(self, n):
+    def get_support_points_split(self, n, simple, svc):
+        if simple:
+            sup = svc.support_
+            dual_c = svc.dual_coef_[0]
+
+            support_eq = []
+            support_ineq = []
+            non_support = []
+
+            for i in range(n):
+                if i not in sup:
+                    non_support.append(i)
+                elif -0.999 <= dual_c[sup.tolist().index(i)] <= 0.999:
+                    support_ineq.append(i)
+                else:
+                    support_eq.append(i)
+            #print([[support_ineq, support_eq, non_support]])
+            yield [support_ineq, support_eq, non_support]
+            raise StopIteration
+
         # todo: come up with a better algorithm
         if n == 1:
             yield [[], [0], []]
             raise StopIteration
         else:
-            for support_ineq, support_eq, non_support in self.get_support_points_split(n-1):
+            for support_ineq, support_eq, non_support in self.get_support_points_split(n-1, False, None):
                 yield [support_ineq+[n-1], support_eq, non_support]
                 yield [support_ineq, support_eq+[n-1], non_support]
                 yield [support_ineq, support_eq, non_support+[n-1]]
@@ -38,9 +57,9 @@ class Adversary:
         svc = SVC(C=self.a, kernel='linear')
         svc.fit(new_train_data, new_train_labels)
         w_old = svc.coef_[0]
-        b_old = svc.intercept_
+        b_old = svc.intercept_[0]
 
-        for support_ineq, support_eq, non_support in self.get_support_points_split(len(new_train_data)):
+        for support_ineq, support_eq, non_support in self.get_support_points_split(len(new_train_data), True, svc):
             sup_ineq_data = [new_train_data[i] for i in support_ineq]
             sup_ineq_labels = [new_train_labels[i] for i in support_ineq]
             sup_eq_data = [new_train_data[i] for i in support_eq]
@@ -48,10 +67,10 @@ class Adversary:
             non_sup_data = [new_train_data[i] for i in non_support]
             non_sup_labels = [new_train_labels[i] for i in non_support]
 
-            w = cvx.Variable(m)
-            b = cvx.Variable()
+            w = cvx.Variable(m, value=w_old)
+            b = cvx.Variable(value=b_old)
             l = cvx.Variable(len(support_eq))
-            g = cvx.Variable(n)
+            g = cvx.Variable(n, value=np.zeros(n))
             z = cvx.Variable(n)
 
             obj = cvx.Minimize(cvx.sum(z)/n)
@@ -60,7 +79,7 @@ class Adversary:
                     l >= 0,
                     l <= self.a,    # todo: double check
                     l*sup_eq_labels + self.a*sum(sup_ineq_labels) == 0,
-                    cvx.norm(g) <= self.eps,
+                    cvx.norm(g) <= n*self.eps,
                     w*w_old >= 0.5]
             for i in range(n):
                 cons.append(z[i] >= new_train_labels[i]*(w*new_train_data[i]+b))
@@ -77,4 +96,5 @@ class Adversary:
 
             prob = cvx.Problem(obj, cons)
             prob.solve()
+            print(prob.status)
             print(prob.value)
