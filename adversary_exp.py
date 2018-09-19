@@ -6,7 +6,7 @@ from sklearn.svm import SVC
 
 
 class Adversary:
-    eps = 0.2
+    eps = 0.1
     a = 1.0
 
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels, dim):
@@ -59,6 +59,11 @@ class Adversary:
         w_old = svc.coef_[0]
         b_old = svc.intercept_[0]
 
+        w = cvx.Variable(m)
+        b = cvx.Variable()
+        g = cvx.Variable(n)
+        z = cvx.Variable(n)
+
         for support_ineq, support_eq, non_support in self.get_support_points_split(len(new_train_data), True, svc):
             sup_ineq_data = [new_train_data[i] for i in support_ineq]
             sup_ineq_labels = [new_train_labels[i] for i in support_ineq]
@@ -67,34 +72,43 @@ class Adversary:
             non_sup_data = [new_train_data[i] for i in non_support]
             non_sup_labels = [new_train_labels[i] for i in non_support]
 
-            w = cvx.Variable(m, value=w_old)
-            b = cvx.Variable(value=b_old)
             l = cvx.Variable(len(support_eq))
-            g = cvx.Variable(n, value=np.zeros(n))
-            z = cvx.Variable(n)
 
-            obj = cvx.Minimize(cvx.sum(z)/n)
+            obj = cvx.Minimize(sum(z)/n)
 
             cons = [z >= -1,
                     l >= 0,
                     l <= self.a,    # todo: double check
-                    l*sup_eq_labels + self.a*sum(sup_ineq_labels) == 0,
+                    np.array(sup_eq_labels)*l + self.a*sum(sup_ineq_labels) == 0,
                     cvx.norm(g) <= n*self.eps,
-                    w*w_old >= 0.5]
+                    w_old*w >= 0.5]
             for i in range(n):
-                cons.append(z[i] >= new_train_labels[i]*(w*new_train_data[i]+b))
+                cons.append(z[i] >= new_train_labels[i]*(new_train_data[i]*w+b))
                 if i in support_ineq:
-                    cons.append(new_train_labels[i]*(w*new_train_data[i]+g[i]+b) <= 1)
+                    cons.append(new_train_labels[i]*(new_train_data[i]*w+g[i]+b) <= 1)
                 elif i in support_eq:
-                    cons.append(new_train_labels[i] * (w * new_train_data[i] + g[i] + b) == 1)
+                    cons.append(new_train_labels[i] * (new_train_data[i]*w+ g[i] + b) == 1)
                 else:
-                    cons.append(new_train_labels[i] * (w * new_train_data[i] + g[i] + b) >= 1)
+                    cons.append(new_train_labels[i] * (new_train_data[i]*w+ g[i] + b) >= 1)
 
             for j in range(m):
-                cons.append(w[j] == cvx.sum([l[i]*sup_eq_labels[i]*sup_eq_data[i][j] for i in range(len(support_eq))]) +
+                cons.append(w[j] == sum([l[i]*sup_eq_labels[i]*sup_eq_data[i][j] for i in range(len(support_eq))]) +
                                  sum([self.a*sup_ineq_labels[i]*sup_ineq_data[i][j] for i in range(len(support_ineq))]))
 
             prob = cvx.Problem(obj, cons)
             prob.solve()
             print(prob.status)
-            print(prob.value)
+            #print(prob.value)
+
+        # recovering infected dataset
+        h = []
+        infected_dataset = []
+
+        for i in range(n):
+            hi = np.array(w.value).flatten()*np.array(g.value[i]).flatten()[0]/(np.linalg.norm(w.value)**2)
+            h.append(hi)
+
+            infected_dataset.append([new_train_data[i, j]+hi[j] for j in range(m)])
+
+        return np.array(infected_dataset), np.linalg.norm(h)/n
+
