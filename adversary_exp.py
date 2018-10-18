@@ -59,46 +59,50 @@ class Adversary:
         w_old = svc.coef_[0]
         b_old = svc.intercept_[0]
 
-        w = cvx.Variable(m)
+        b_t = 1000
+
+        h_hat ={} #cvx.Variable((n, n, m))
+        for k in range(m):
+            h_hat[k] = cvx.Variable(n, n)
+        g = cvx.Variable(n, n)
         b = cvx.Variable()
-        g = cvx.Variable(n)
-        z = cvx.Variable(n)
+        a_slack = cvx.Variable(n)
+        c_slack = cvx.Variable(n)
+        c_dual = cvx.Variable(n)
+        z = cvx.Bool(n)
 
-        for support_ineq, support_eq, non_support in self.get_support_points_split(len(new_train_data), True, svc):
-            sup_ineq_data = [new_train_data[i] for i in support_ineq]
-            sup_ineq_labels = [new_train_labels[i] for i in support_ineq]
-            sup_eq_data = [new_train_data[i] for i in support_eq]
-            sup_eq_labels = [new_train_labels[i] for i in support_eq]
-            non_sup_data = [new_train_data[i] for i in non_support]
-            non_sup_labels = [new_train_labels[i] for i in non_support]
+        cons = [a_slack >= -1,
+                c_dual >= 0,
+                c_dual <= self.a*z,    # todo: double check
+                np.array(new_train_labels)*c_dual == 0,
+                c_slack >= 0,
+                c_slack <= b_t*z,]
 
-            l = cvx.Variable(len(support_eq))
+        w = np.zeros(m)
+        for j in range(m):
+            w[j] = cvx.sum_entries([c_dual[i]*new_train_labels[i]*new_train_data[i, j]+
+                             new_train_labels*h_hat[i, i, j] for i in range(n)])
 
-            obj = cvx.Minimize(sum(z)/n)
+        for i in range(n):
+            g_add = np.array([h_hat[j, i, :].dot(new_train_data[j,:])*new_train_labels[j]+
+                                new_train_labels[j]*g[j, i] for j in range(n)]).sum()
+            cons.append(a_slack[i] >= new_train_labels[i]*(new_train_data[i]*w+b))
+            cons.append(new_train_labels[i]*(new_train_data[i, :].dot(w)+g_add+b) >= 1-c_slack[i])
+            cons.append(new_train_labels[i]*(new_train_data[i, :].dot(w)+g_add+b)-1+c_slack[i]<=b_t*z[i])
 
-            cons = [z >= -1,
-                    l >= 0,
-                    l <= self.a,    # todo: double check
-                    np.array(sup_eq_labels)*l + self.a*sum(sup_ineq_labels) == 0,
-                    cvx.norm(g) <= n*self.eps,
-                    w_old*w >= 0.5]
-            for i in range(n):
-                cons.append(z[i] >= new_train_labels[i]*(new_train_data[i]*w+b))
-                if i in support_ineq:
-                    cons.append(new_train_labels[i]*(new_train_data[i]*w+g[i]+b) <= 1)
-                elif i in support_eq:
-                    cons.append(new_train_labels[i] * (new_train_data[i]*w+ g[i] + b) == 1)
-                else:
-                    cons.append(new_train_labels[i] * (new_train_data[i]*w+ g[i] + b) >= 1)
+            for j in range(n):
+                cons.append(g[i, j] >= -c_dual[i]*(self.eps**2))
+                cons.append(g[i, j] <= c_dual[i] * (self.eps ** 2))
 
-            for j in range(m):
-                cons.append(w[j] == sum([l[i]*sup_eq_labels[i]*sup_eq_data[i][j] for i in range(len(support_eq))]) +
-                                 sum([self.a*sup_ineq_labels[i]*sup_ineq_data[i][j] for i in range(len(support_ineq))]))
+                for k in range(m):
+                    cons.append(h_hat[i, j, k] >= -self.eps*c_dual[i])
+                    cons.append(h_hat[i, j, k] <= self.eps * c_dual[i])
 
-            prob = cvx.Problem(obj, cons)
-            prob.solve()
-            print(prob.status)
-            #print(prob.value)
+        obj = cvx.Minimize(a_slack.sum())
+        prob = cvx.Problem(obj, cons)
+        prob.solve()
+        print(prob.status)
+        #print(prob.value)
 
         # recovering infected dataset
         h = []
