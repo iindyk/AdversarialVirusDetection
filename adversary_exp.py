@@ -76,15 +76,16 @@ class Adversary:
                 c_dual <= self.a*z,    # todo: double check
                 np.array(new_train_labels)*c_dual == 0,
                 c_slack >= 0,
-                c_slack <= b_t*z,]
+                c_slack <= b_t*z]
 
         w = np.zeros(m)
         for j in range(m):
-            w[j] = cvx.sum_entries([c_dual[i]*new_train_labels[i]*new_train_data[i, j]+
-                             new_train_labels*h_hat[i, i, j] for i in range(n)])
+            w[j] = np.multiply(new_train_labels, new_train_data[:, j])*c_dual + \
+                   np.array(new_train_labels)*cvx.vec(cvx.diag(h_hat[j]))
+
 
         for i in range(n):
-            g_add = np.array([h_hat[j, i, :].dot(new_train_data[j,:])*new_train_labels[j]+
+            g_add = np.array([h_hat[j][i, :].dot(new_train_data[j,:])*new_train_labels[j]+
                                 new_train_labels[j]*g[j, i] for j in range(n)]).sum()
             cons.append(a_slack[i] >= new_train_labels[i]*(new_train_data[i]*w+b))
             cons.append(new_train_labels[i]*(new_train_data[i, :].dot(w)+g_add+b) >= 1-c_slack[i])
@@ -95,10 +96,10 @@ class Adversary:
                 cons.append(g[i, j] <= c_dual[i] * (self.eps ** 2))
 
                 for k in range(m):
-                    cons.append(h_hat[i, j, k] >= -self.eps*c_dual[i])
-                    cons.append(h_hat[i, j, k] <= self.eps * c_dual[i])
+                    cons.append(h_hat[i][j, k] >= -self.eps*c_dual[i])
+                    cons.append(h_hat[i][j, k] <= self.eps * c_dual[i])
 
-        obj = cvx.Minimize(a_slack.sum())
+        obj = cvx.Minimize(cvx.sum_entries(a_slack))
         prob = cvx.Problem(obj, cons)
         prob.solve()
         print(prob.status)
