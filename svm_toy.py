@@ -29,6 +29,7 @@ svc_orig.fit(dataset, labels)
 svc_inf = SVC(C=1, kernel='linear')
 svc_inf.fit(infected_dataset, labels)
 print('attack norm = ', norm)
+print('w0= ', svc_inf.coef_[0][0], 'w1= ', svc_inf.coef_[0][1], 'b= ', svc_inf.intercept_[0])
 
 g2d.graph_results(0, 1, dataset, labels, infected_dataset, infected_points, colors, svc_orig, svc_inf)
 

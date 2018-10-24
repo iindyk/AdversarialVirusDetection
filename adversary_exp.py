@@ -115,15 +115,15 @@ class Adversary:
         h = []
         infected_dataset = []
 
+        n_sup = 0
         for i in range(n):
             hi = [(h_hat[j][i, i].value/c_dual[i].value if c_dual[i].value != 0 else 0.0) for j in range(m)]
             h.append(hi)
-
+            if c_dual[i].value!=0: n_sup+=1
             infected_dataset.append([new_train_data[i, j]+hi[j] for j in range(m)])
 
-        print(w[0].value)
-        print(w[1].value)
-        print(b.value)
+        print('w0= ', w[0].value, 'w1= ', w[1].value, 'b= ', b.value)
+        print('support vectors: ', n_sup)
 
         return np.array(infected_dataset), np.linalg.norm(h)/n
 
