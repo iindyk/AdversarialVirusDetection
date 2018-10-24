@@ -6,7 +6,7 @@ from sklearn.svm import SVC
 
 
 class Adversary:
-    eps = 0.1
+    eps = 1
     a = 1.0
 
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels, dim):
@@ -71,49 +71,59 @@ class Adversary:
         c_dual = cvx.Variable(n)
         z = cvx.Bool(n)
 
+        labels = cvx.Constant(np.array(new_train_labels))
+        data = cvx.Constant(np.array(new_train_data))
+
         cons = [a_slack >= -1,
                 c_dual >= 0,
                 c_dual <= self.a*z,    # todo: double check
-                np.array(new_train_labels)*c_dual == 0,
+                labels * c_dual == 0,
                 c_slack >= 0,
                 c_slack <= b_t*z]
 
-        w = np.zeros(m)
+        w = {}
         for j in range(m):
-            w[j] = np.multiply(new_train_labels, new_train_data[:, j])*c_dual + \
-                   np.array(new_train_labels)*cvx.vec(cvx.diag(h_hat[j]))
-
+            num1 = c_dual.T * cvx.vstack([labels[i]*data[i, j] for i in range(n)])
+            num2 = labels * cvx.diag(h_hat[j])
+            w[j] = num1 + num2
 
         for i in range(n):
-            g_add = np.array([h_hat[j][i, :].dot(new_train_data[j,:])*new_train_labels[j]+
-                                new_train_labels[j]*g[j, i] for j in range(n)]).sum()
-            cons.append(a_slack[i] >= new_train_labels[i]*(new_train_data[i]*w+b))
-            cons.append(new_train_labels[i]*(new_train_data[i, :].dot(w)+g_add+b) >= 1-c_slack[i])
-            cons.append(new_train_labels[i]*(new_train_data[i, :].dot(w)+g_add+b)-1+c_slack[i]<=b_t*z[i])
+            g_add = 0
+            for k in range(n):
+                h_kij = cvx.vstack([h_hat[j][k, i] for j in range(m)])
+                g_add += (data[k, :]*h_kij)*labels[k]+labels[k]*g[k, i]
+
+            cons.append(a_slack[i] >= labels[i]*(data[i, :]*np.array(list(w))+b))
+            cons.append(labels[i]*(data[i, :]*np.array(list(w))+g_add+b) >= 1-c_slack[i])
+            cons.append(labels[i]*(data[i, :]*np.array(list(w))+g_add+b)-1+c_slack[i]<=b_t*z[i])
 
             for j in range(n):
                 cons.append(g[i, j] >= -c_dual[i]*(self.eps**2))
-                cons.append(g[i, j] <= c_dual[i] * (self.eps ** 2))
+                cons.append(g[i, j] <= c_dual[i]*(self.eps**2))
 
                 for k in range(m):
-                    cons.append(h_hat[i][j, k] >= -self.eps*c_dual[i])
-                    cons.append(h_hat[i][j, k] <= self.eps * c_dual[i])
+                    cons.append(h_hat[k][j, i] >= -self.eps*c_dual[j])
+                    cons.append(h_hat[k][j, i] <= self.eps*c_dual[j])
 
         obj = cvx.Minimize(cvx.sum_entries(a_slack))
         prob = cvx.Problem(obj, cons)
         prob.solve()
         print(prob.status)
-        #print(prob.value)
+        # print(prob.value)
 
         # recovering infected dataset
         h = []
         infected_dataset = []
 
         for i in range(n):
-            hi = np.array(w.value).flatten()*np.array(g.value[i]).flatten()[0]/(np.linalg.norm(w.value)**2)
+            hi = [(h_hat[j][i, i].value/c_dual[i].value if c_dual[i].value != 0 else 0.0) for j in range(m)]
             h.append(hi)
 
             infected_dataset.append([new_train_data[i, j]+hi[j] for j in range(m)])
+
+        print(w[0].value)
+        print(w[1].value)
+        print(b.value)
 
         return np.array(infected_dataset), np.linalg.norm(h)/n
 
