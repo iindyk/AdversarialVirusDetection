@@ -76,22 +76,26 @@ class Adversary:
 
         cons = [a_slack >= -1,
                 c_dual >= 0,
-                c_dual <= self.a*z,    # todo: double check
+                #c_dual <= self.a*(1-z),    # todo: double check
                 labels * c_dual == 0,
                 c_slack >= 0,
-                c_slack <= b_t*z]
+                #c_slack <= b_t*z
+                ]
 
         w = {}
         for j in range(m):
             num1 = c_dual.T * cvx.vstack([labels[i]*data[i, j] for i in range(n)])
             num2 = labels * cvx.diag(h_hat[j])
-            w[j] = num1 + num2
+            w[j] = self.a*(num1 + num2)
 
         for i in range(n):
             g_add = 0
             for k in range(n):
                 h_kij = cvx.vstack([h_hat[j][k, i] for j in range(m)])
                 g_add += (data[k, :]*h_kij)*labels[k]+labels[k]*g[k, i]
+
+            cons.append(c_dual[i] <= self.a*(1-z[i]))
+            cons.append(c_slack[i] <= b_t*z[i])
 
             cons.append(a_slack[i] >= labels[i]*(data[i, :]*np.array(list(w))+b))
             cons.append(labels[i]*(data[i, :]*np.array(list(w))+g_add+b) >= 1-c_slack[i])
@@ -119,6 +123,7 @@ class Adversary:
         for i in range(n):
             hi = [(h_hat[j][i, i].value/c_dual[i].value if c_dual[i].value != 0 else 0.0) for j in range(m)]
             h.append(hi)
+            print(c_dual[i].value)
             if c_dual[i].value!=0: n_sup+=1
             infected_dataset.append([new_train_data[i, j]+hi[j] for j in range(m)])
 
