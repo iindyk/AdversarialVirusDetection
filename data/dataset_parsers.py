@@ -2,6 +2,7 @@ import os
 import pickle
 import numpy as np
 from random import uniform, randint
+from PIL import Image
 
 
 # convert opcode txt file to dictionary of frequencies
@@ -193,6 +194,34 @@ def get_toy_dataset(n, m):
         else:
             labels[k] = 1
     return dataset[:int(0.5*n), :], labels[:int(0.5*n)], dataset[int(0.5*n):, :], labels[int(0.5*n):]
+
+
+def read_data_cat_dog():
+    dir_tr = 'data/images/cat_dog/train'
+    data = []
+    labels = []
+    size = 64, 64
+    maxit = 2000
+    nit = 0
+
+    for file in os.listdir(dir_tr):
+        filename = os.fsdecode(file)
+        img = Image.open(os.path.join(dir_tr, filename)).convert('RGBA')
+        img = img.resize(size, Image.ANTIALIAS)
+        arr = np.array(img)
+
+        data.append(arr.ravel())
+        if 'dog' in file:
+            labels.append(-1.0)
+        else:
+            labels.append(1.0)
+
+        nit += 1
+        # print(nit)
+        if nit > maxit:
+            break
+
+    return data[:1500], labels[:1500], data[1500:1700], labels[1500:1700], data[1700:], labels[1700:]
 
 
 
