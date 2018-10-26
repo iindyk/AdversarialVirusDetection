@@ -200,8 +200,8 @@ def read_data_cat_dog():
     dir_tr = 'data/images/cat_dog/train'
     data = []
     labels = []
-    size = 64, 64
-    maxit = 2000
+    size = 16, 16
+    maxit = 1000
     nit = 0
 
     for file in os.listdir(dir_tr):
@@ -221,7 +221,7 @@ def read_data_cat_dog():
         if nit > maxit:
             break
 
-    return data[:1500], labels[:1500], data[1500:1700], labels[1500:1700], data[1700:], labels[1700:]
+    return np.array(data[:700]), labels[:700], np.array(data[700:800]), labels[700:800], np.array(data[800:]), labels[800:]
 
 
 

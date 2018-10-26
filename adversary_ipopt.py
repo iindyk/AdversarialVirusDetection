@@ -173,7 +173,7 @@ class Adversary:
         nlp.num_option('acceptable_constr_viol_tol', 0.1)
 
         nlp.int_option('print_level', 5)
-        nlp.int_option('max_iter', 300)
+        nlp.int_option('max_iter', 200)
         nlp.int_option('print_frequency_iter', 10)
 
         print(datetime.datetime.now(), ": Going to call solve")

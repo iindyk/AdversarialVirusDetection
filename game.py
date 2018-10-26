@@ -10,6 +10,7 @@ n_initial = 100  # size of initial training dataset
 n_steps = 100     # number of steps in game
 C = 1.0          # classifier parameter
 train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels = dp.read_data_cat_dog()
+print('data read complete')
 steps = np.arange(n_initial, len(train_labels), int(np.ceil((len(train_labels)-n_initial)/n_steps)))
 svm1 = svm.SVC(kernel='linear', C=C).fit(train_dataset, train_labels)
 err_best = 1 - accuracy_score(test_labels, svm1.predict(test_dataset))
