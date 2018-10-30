@@ -1,13 +1,13 @@
 import cvxpy as cvx
-import adversary_exp as adv
+import adversary_gd as adv
 import data.dataset_parsers as dp
 import numpy as np
 from sklearn.svm import SVC
 from graphing import graph_2dim_results as g2d
 
 
-adv = adv.Adversary([], [], [], [], 2)
 dataset, labels, _, _ = dp.get_toy_dataset(100, 2)
+adv = adv.Adversary([], [], dataset, labels, 2)
 
 infected_dataset, norm = adv.get_infected_dataset(dataset, labels)
 
@@ -15,7 +15,7 @@ infected_dataset, norm = adv.get_infected_dataset(dataset, labels)
 infected_points = []
 colors = []
 for i in range(len(dataset)):
-    if np.linalg.norm(np.array(infected_dataset[i])-dataset[i,:])>0.05:
+    if np.linalg.norm(np.array(infected_dataset[i])-dataset[i,:])>0.1:
         infected_points.append(infected_dataset[i])
 
     if labels[i] == 1:

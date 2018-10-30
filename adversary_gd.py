@@ -5,7 +5,7 @@ import sklearn.svm as svm
 
 
 class Adversary:
-    eps = 0.1
+    eps = 0.02
     a = 1.0
 
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels, dim):
@@ -24,7 +24,7 @@ class Adversary:
     def get_infected_dataset(self, new_train_data, new_train_labels):
         maxit = 100
         delta = 0.0001
-        step = 0.1
+        step = 1e-4
         # todo:train_dataset_ext = np.append(self.train_dataset, new_train_data, axis=0)
         train_data_ext = new_train_data
         n, m = np.shape(new_train_data)
@@ -35,10 +35,16 @@ class Adversary:
             svc = svm.SVC(kernel='linear', C=self.a).fit(train_data_current, new_train_labels)
             w = svc.coef_[0]        # normal vector
             b = svc.intercept_[0]   # intercept
-            l = np.array([svc.dual_coef_[0][i]*new_train_labels[i] for i in range(n)])    # dual variables
 
+            # construct dual variables vector
+            l = np.zeros(n)
+            tmp_i = 0
+            for i in range(n):
+                if i in svc.support_:
+                    l[i] = svc.dual_coef_[0, tmp_i]*new_train_labels[i]
+                    tmp_i += 1
             # get approximate gradient of w
-            dw_dh = np.array([[svc.dual_coef_[0][i]*new_train_labels[i] for j in range(m)] for i in range(n)])
+            dw_dh = np.array([[l[i]*new_train_labels[i] for j in range(m)] for i in range(n)])
 
             # get approximate gradient of b
             # 1: find point on the margin's boundary
@@ -53,19 +59,22 @@ class Adversary:
             for k in range(n_t):
                 for i in range(n):
                     bin_ = self.test_labels[k] if self.test_labels[k]*(np.dot(w, self.test_dataset[k])+b) > -1 else 0.0
-                    obj_grad_val[i, :] += (np.multiply(dw_dh[i, :], self.test_dataset)+db_dh[i, :])*\
+                    obj_grad_val[i, :] += (np.multiply(dw_dh[i, :], self.test_dataset[k, :])+db_dh[i, :])*\
                                           self.test_labels[k]*bin_
 
             return obj_grad_val
 
         # perform gradient descent
         nit = 0
-        h = np.zeros(n, m)
-        change = np.ones(n, m)
+        h = np.zeros((n, m))
+        change = np.ones((n, m))
         _train_data_current = np.copy(new_train_data)
-        while nit < maxit and np.linalg.norm(change) > delta and np.linalg.norm(h) <= self.eps:
+        while nit < maxit and np.linalg.norm(change) > delta:
             _train_data_current += h
             change = -1*step*obj_grad(_train_data_current)
             h -= change
-
-        return new_train_data+h, np.linalg.norm(h)
+            nit += 1
+            if np.linalg.norm(h) >= self.eps*n:
+                break
+        print(nit)
+        return new_train_data+h, np.linalg.norm(h)/n
