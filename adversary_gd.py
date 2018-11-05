@@ -5,7 +5,7 @@ import sklearn.svm as svm
 
 
 class Adversary:
-    eps = 0.05
+    eps = 0.1
     a = 1.0
 
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels, dim):
@@ -22,9 +22,9 @@ class Adversary:
 
     # @profile
     def get_infected_dataset(self, new_train_data, new_train_labels):
-        maxit = 100
+        maxit = 200
         delta = 0.0001
-        step = 1e-5
+        step = 1e-4
         n, m = np.shape(new_train_data)
         n_t = len(self.test_labels)
 
