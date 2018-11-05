@@ -179,6 +179,7 @@ def create_dictionary():
 
 
 def get_toy_dataset(n, m):
+    random_flips = 0.1
     dataset = np.random.uniform(0, 1, (n, m))
     labels = []
     for i in range(n):
@@ -187,7 +188,7 @@ def get_toy_dataset(n, m):
         else:
             labels.append(-1)
     # random attack
-    for i in range(int(0.1*n)):
+    for i in range(int(random_flips*n)):
         k = randint(0, n-1)
         if labels[k] == 1:
             labels[k] = -1

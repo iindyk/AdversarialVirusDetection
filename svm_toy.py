@@ -6,7 +6,7 @@ from sklearn.svm import SVC
 from graphing import graph_2dim_results as g2d
 
 
-dataset, labels, _, _ = dp.get_toy_dataset(100, 2)
+dataset, labels, _, _ = dp.get_toy_dataset(200, 2)
 adv = adv.Adversary([], [], dataset, labels, 2)
 
 infected_dataset, norm = adv.get_infected_dataset(dataset, labels)

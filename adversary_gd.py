@@ -5,7 +5,7 @@ import sklearn.svm as svm
 
 
 class Adversary:
-    eps = 0.02
+    eps = 0.01
     a = 1.0
 
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels, dim):
@@ -30,9 +30,13 @@ class Adversary:
 
         def obj_grad(train_data_current):   # returns approximate gradient of adversary's objective
 
-            # todo:train_dataset_ext = np.append(self.train_dataset, new_train_data, axis=0)
-            train_data_ext = np.append(train_data_current, self.train_dataset, axis=0)
-            train_labels_ext = np.append(new_train_labels, self.train_dataset)
+            # get extended dataset
+            if self.train_dataset:
+                train_data_ext = np.append(train_data_current, self.train_dataset, axis=0)
+                train_labels_ext = np.append(new_train_labels, self.train_dataset)
+            else:
+                train_data_ext = train_data_current
+                train_labels_ext = new_train_labels
 
             # build svm on extended data and get parameters
             svc = svm.SVC(kernel='linear', C=self.a).fit(train_data_ext, train_labels_ext)
