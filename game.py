@@ -31,7 +31,7 @@ print('classifier2: initiated, error on test dataset is ', err_test2)
 classifiers.append(classifier2)
 
 classifier3 = cl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
-                           , valid_dataset, valid_labels, C, 30)
+                           , valid_dataset, valid_labels, C, 100)
 err_test3 = 1 - accuracy_score(test_labels, classifier3.predict(test_dataset))
 print('classifier3: initiated, error on test dataset is ', err_test3)
 classifiers.append(classifier3)
@@ -68,10 +68,10 @@ for i in range(len(steps)-1):
         if classifiers[j].is_valid(new_infected_data, new_train_labels):
             print('classifier'+str(j+1)+': data is valid, adding to training set')
             classifiers[j].partial_fit(new_infected_data, new_train_labels)
-            adversary.eps *= 1.1
+            #adversary.eps *= 1.1
         else:
             print('classifier'+str(j+1)+': data is not valid, disregarding')
-            adversary.eps *= 0.9
+            #adversary.eps *= 0.9
         # todo: strategy for classifier.crit_value & adversary.eps change
         test_errs[j, i+1] = 1 - accuracy_score(test_labels, classifiers[j].predict(test_dataset))
     adversary.add_train_data(new_infected_data, new_train_labels)
@@ -79,4 +79,4 @@ for i in range(len(steps)-1):
     #print('classifier: error on validation dataset is ', err_valid)
     #print('classifier: error on test dataset is ', err_test)
 
-gr.graph_multidim_results(test_errs, ['constant', 'INC', 'DEC', 'no perturbation'], n_steps)
+gr.graph_multidim_results(test_errs, ['constant_10', 'constant_20', 'constant_100', 'INC', 'DEC'], n_steps)

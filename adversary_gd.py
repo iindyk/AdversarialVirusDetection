@@ -24,14 +24,14 @@ class Adversary:
     def get_infected_dataset(self, new_train_data, new_train_labels):
         maxit = 100
         delta = 0.0001
-        step = 1e-4
+        step = 1e-5
         n, m = np.shape(new_train_data)
         n_t = len(self.test_labels)
 
         def obj_grad(train_data_current):   # returns approximate gradient of adversary's objective
 
             # get extended dataset
-            if self.train_dataset.size != 0:
+            if len(self.train_dataset) != 0:
                 train_data_ext = np.append(train_data_current, self.train_dataset, axis=0)
                 train_labels_ext = np.append(new_train_labels, self.train_labels)
             else:
@@ -81,9 +81,9 @@ class Adversary:
         while nit < maxit and np.linalg.norm(change) > delta:
             _train_data_current += h
             change = -1*step*obj_grad(_train_data_current)
-            h -= change
+            h += change
             nit += 1
             if np.linalg.norm(h) >= self.eps*n:
                 break
-        #print(nit)
+        print(nit)
         return new_train_data+h, np.linalg.norm(h)/n

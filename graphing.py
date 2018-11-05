@@ -50,7 +50,7 @@ def graph_multidim_results(test_errs, classifier_names, n):
     for i in range(n_c):
         ax.plot(time_pts, test_errs[i, :], '-', label=classifier_names[i])
 
-    plt.ylim(ymax=0.5)
+    plt.ylim(top=0.5)
     legend = ax.legend(loc='upper left', shadow=True)
     frame = legend.get_frame()
     frame.set_facecolor('0.90')

@@ -3,10 +3,10 @@ import adversary_gd as adv
 import data.dataset_parsers as dp
 import numpy as np
 from sklearn.svm import SVC
-import graphing.graph_2dim_results as g2d
+import graphing as gf
 
 
-dataset, labels, _, _ = dp.get_toy_dataset(200, 2)
+dataset, labels, _, _ = dp.get_toy_dataset(100, 2)
 adv = adv.Adversary([], [], dataset, labels, 2)
 
 infected_dataset, norm = adv.get_infected_dataset(dataset, labels)
@@ -31,6 +31,6 @@ svc_inf.fit(infected_dataset, labels)
 print('attack norm = ', norm)
 print('w0= ', svc_inf.coef_[0][0], 'w1= ', svc_inf.coef_[0][1], 'b= ', svc_inf.intercept_[0])
 
-g2d.graph_results(0, 1, dataset, labels, infected_dataset, infected_points, colors, svc_orig, svc_inf)
+gf.graph_2dim_results(0, 1, dataset, labels, infected_dataset, infected_points, colors, svc_orig, svc_inf)
 
 
