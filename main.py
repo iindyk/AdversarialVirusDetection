@@ -1,30 +1,31 @@
 from data import dataset_parsers as dp
 import sklearn.svm as svm
 from sklearn.metrics import accuracy_score
+import os
 import adversary_ipopt as adv
 import numpy as np
 from graphing import graph_2dim_results as gr
 
 # saving data to pickle file
-# filename = "/home/iindyk/PycharmProjects/AdversarialVirusDetection/data/dictionary.txt"
-# # dp.create_dictionary()
-# dictionary = open(filename, 'r').read().split()
-# dp.files2freq_pickle(os.getcwd()+'/data/dumps', dictionary, 0.2, 0.2)
-#
-# C = 1.0
-# train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels = dp.read_data()
-# svm = svm.SVC(kernel='linear', C=C).fit(train_dataset, train_labels)
-# err_test = 1 - accuracy_score(test_labels, svm.predict(test_dataset))
-# err_train = 1 - accuracy_score(train_labels, svm.predict(train_dataset))
-# err_valid = 1 - accuracy_score(valid_labels, svm.predict(valid_dataset))
-# print(err_test)
-# print(err_train)
-# print(err_valid)
-# print(svm.coef_)
+filename = "/home/iindyk/PycharmProjects/AdversarialVirusDetection/data/dictionary.txt"
+#dp.create_dictionary()
+dictionary = open(filename, 'r').read().split()
+dp.files2freq_pickle(os.getcwd()+'/data/dumps', dictionary, 0.2, 0.2)
+
+C = 1.0
+train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels = dp.read_data()
+svm = svm.SVC(kernel='linear', C=C).fit(train_dataset, train_labels)
+err_test = 1 - accuracy_score(test_labels, svm.predict(test_dataset))
+err_train = 1 - accuracy_score(train_labels, svm.predict(train_dataset))
+err_valid = 1 - accuracy_score(valid_labels, svm.predict(valid_dataset))
+print(err_test)
+print(err_train)
+print(err_valid)
+print(svm.coef_)
 
 
 # testing one time adversarial attack
-C = 1.0
+'''C = 1.0
 n = 500
 m = 2
 train_dataset, train_labels, test_dataset, test_labels = dp.get_toy_dataset(n, m)
@@ -48,4 +49,4 @@ for i in range(int(0.5*n)):
 print('attack norm is ', np.linalg.norm(train_dataset_infected-train_dataset)/np.sqrt(int(0.5*n)))
 
 gr.graph_results(0, 1, train_dataset, train_labels, train_dataset_infected, inf_points,
-                 colors, svm_orig, svm_infected)
+                 colors, svm_orig, svm_infected)'''

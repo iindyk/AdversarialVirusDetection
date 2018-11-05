@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.metrics import accuracy_score
 
 
-def graph_results(A, B, dataset, labels, dataset_infected, inf_points, colors,  svc_orig, svc_inf):
+def graph_2dim_results(A, B, dataset, labels, dataset_infected, inf_points, colors,  svc_orig, svc_inf):
     step = (B - A) / 100.0  # step size in the mesh
     x_min, x_max = -0.2, 1.2
     y_min, y_max = -0.2, 1.2
@@ -38,4 +38,21 @@ def graph_results(A, B, dataset, labels, dataset_infected, inf_points, colors,  
     plt.scatter([float(i[0]) for i in dataset], [float(i[1]) for i in dataset], c=colors, cmap=plt.cm.coolwarm)
     plt.title('orig svc on orig data, err='+str(int(100*err_orig_svc))+'%')
     plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+    plt.show()
+
+
+def graph_multidim_results(test_errs, classifier_names, n):
+    time_pts = np.arange(1, n)
+
+    fig, ax = plt.subplots()
+    n_c = len(classifier_names)
+
+    for i in range(n_c):
+        ax.plot(time_pts, test_errs[i, :], '-', label=classifier_names[i])
+
+    plt.ylim(ymax=0.5)
+    legend = ax.legend(loc='upper left', shadow=True)
+    frame = legend.get_frame()
+    frame.set_facecolor('0.90')
+
     plt.show()

@@ -1,7 +1,8 @@
 from data import dataset_parsers as dp
 import classifier as cl
-import adversary_ipopt as adv
+import adversary_gd as adv
 import numpy as np
+import graphing as gr
 from sklearn.metrics import accuracy_score
 import sklearn.svm as svm
 
@@ -9,7 +10,7 @@ import sklearn.svm as svm
 n_initial = 100  # size of initial training dataset
 n_steps = 100     # number of steps in game
 C = 1.0          # classifier parameter
-train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels = dp.read_data_cat_dog()
+train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels = dp.read_data()
 print('data read complete')
 steps = np.arange(n_initial, len(train_labels), int(np.ceil((len(train_labels)-n_initial)/n_steps)))
 svm1 = svm.SVC(kernel='linear', C=C).fit(train_dataset, train_labels)
@@ -78,8 +79,4 @@ for i in range(len(steps)-1):
     #print('classifier: error on validation dataset is ', err_valid)
     #print('classifier: error on test dataset is ', err_test)
 
-#svm2 = svm.SVC(kernel='linear', C=C).fit(classifier.train_dataset, classifier.train_labels)
-#err_check = 1 - accuracy_score(test_labels, svm2.predict(test_dataset))
-#print('svm check error on test dataset ', err_check)
-for i in range(len(classifiers)):
-    print('classifier'+str(i+1)+' errors are '+str(test_errs[i, :]))
+gr.graph_multidim_results(test_errs, ['constant', 'INC', 'DEC', 'no perturbation'], n_steps)

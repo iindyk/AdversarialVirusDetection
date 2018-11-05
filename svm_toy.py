@@ -3,7 +3,7 @@ import adversary_gd as adv
 import data.dataset_parsers as dp
 import numpy as np
 from sklearn.svm import SVC
-from graphing import graph_2dim_results as g2d
+import graphing.graph_2dim_results as g2d
 
 
 dataset, labels, _, _ = dp.get_toy_dataset(200, 2)
