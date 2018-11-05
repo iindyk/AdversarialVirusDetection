@@ -25,24 +25,29 @@ class Adversary:
         maxit = 100
         delta = 0.0001
         step = 1e-4
-        # todo:train_dataset_ext = np.append(self.train_dataset, new_train_data, axis=0)
-        train_data_ext = new_train_data
         n, m = np.shape(new_train_data)
         n_t = len(self.test_labels)
 
-        def obj_grad(train_data_current):
-            # build svm on current data and get parameters
-            svc = svm.SVC(kernel='linear', C=self.a).fit(train_data_current, new_train_labels)
+        def obj_grad(train_data_current):   # returns approximate gradient of adversary's objective
+
+            # todo:train_dataset_ext = np.append(self.train_dataset, new_train_data, axis=0)
+            train_data_ext = np.append(train_data_current, self.train_dataset, axis=0)
+            train_labels_ext = np.append(new_train_labels, self.train_dataset)
+
+            # build svm on extended data and get parameters
+            svc = svm.SVC(kernel='linear', C=self.a).fit(train_data_ext, train_labels_ext)
             w = svc.coef_[0]        # normal vector
             b = svc.intercept_[0]   # intercept
 
-            # construct dual variables vector
-            l = np.zeros(n)
+            # construct extended dual variables vector
+            l_ext = np.zeros(len(train_labels_ext))
             tmp_i = 0
-            for i in range(n):
+            for i in range(len(train_labels_ext)):
                 if i in svc.support_:
-                    l[i] = svc.dual_coef_[0, tmp_i]*new_train_labels[i]
+                    l_ext[i] = svc.dual_coef_[0, tmp_i]*train_labels_ext[i]
                     tmp_i += 1
+            l = l_ext[:n]
+
             # get approximate gradient of w
             dw_dh = np.array([[l[i]*new_train_labels[i] for j in range(m)] for i in range(n)])
 
