@@ -22,8 +22,8 @@ class Adversary:
 
     # @profile
     def get_infected_dataset(self, new_train_data, new_train_labels):
-        maxit = 200
-        delta = 0.0001
+        maxit = 100
+        delta = 1e-9
         step = 1e-4
         n, m = np.shape(new_train_data)
         n_t = len(self.test_labels)
@@ -68,8 +68,7 @@ class Adversary:
             for k in range(n_t):
                 for i in range(n):
                     bin_ = self.test_labels[k] if self.test_labels[k]*(np.dot(w, self.test_dataset[k])+b) > -1 else 0.0
-                    obj_grad_val[i, :] += (np.multiply(dw_dh[i, :], self.test_dataset[k, :])+db_dh[i, :])*\
-                                          self.test_labels[k]*bin_
+                    obj_grad_val[i, :] += (np.multiply(dw_dh[i, :], self.test_dataset[k, :])+db_dh[i, :])*bin_
 
             return obj_grad_val
 
