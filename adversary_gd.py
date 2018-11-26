@@ -5,7 +5,7 @@ import sklearn.svm as svm
 
 
 class Adversary:
-    eps = 0.02
+    eps = 0.04
     a = 1.0
 
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels, dim):
@@ -63,13 +63,14 @@ class Adversary:
                 if 0.001 < l[i] < 0.999:
                     idx = i
                     break
-            db_dh = np.array([l[j]*new_train_labels[j]*new_train_data[idx] for j in range(n)])
+            db_dh = np.array([np.multiply(dw_dh[j, :], new_train_data[idx]) for j in range(n)])
 
             obj_grad_val = np.zeros((n, m))
             for k in range(n_t):
-                for i in range(n):
-                    bin_ = self.test_labels[k] if self.test_labels[k]*(np.dot(w, self.test_dataset[k])+b) > -1 else 0.0
-                    obj_grad_val[i, :] += (np.multiply(dw_dh[i, :], self.test_dataset[k, :])+db_dh[i, :])*bin_
+                bin_ = self.test_labels[k] if self.test_labels[k] * (np.dot(w, self.test_dataset[k]) + b) > -1 else 0.0
+                if bin_ != 0:
+                    for i in range(n):
+                        obj_grad_val[i, :] += (np.multiply(dw_dh[i, :], self.test_dataset[k, :])+db_dh[i, :])*bin_
 
             return obj_grad_val/n_t
 
@@ -79,11 +80,12 @@ class Adversary:
         change = np.ones((n, m))
         _train_data_current = np.copy(new_train_data)
         while nit < maxit and np.linalg.norm(change) > delta:
-            _train_data_current += h
+            _train_data_current += change
             change = -1*step*obj_grad(_train_data_current)
             h += change
             nit += 1
             if np.linalg.norm(h) >= self.eps*n:
                 break
+
         print(nit)
         return new_train_data+h, np.linalg.norm(h)/n

@@ -15,7 +15,7 @@ infected_dataset, norm = adv.get_infected_dataset(dataset, labels)
 infected_points = []
 colors = []
 for i in range(len(dataset)):
-    if np.linalg.norm(np.array(infected_dataset[i])-dataset[i,:])>0.1:
+    if np.linalg.norm(np.array(infected_dataset[i])-dataset[i, :]) > 0.1:
         infected_points.append(infected_dataset[i])
 
     if labels[i] == 1:
