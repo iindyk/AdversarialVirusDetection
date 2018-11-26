@@ -5,7 +5,7 @@ import sklearn.svm as svm
 
 
 class Adversary:
-    eps = 0.1
+    eps = 0.02
     a = 1.0
 
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels, dim):
@@ -24,7 +24,7 @@ class Adversary:
     def get_infected_dataset(self, new_train_data, new_train_labels):
         maxit = 100
         delta = 1e-9
-        step = 1e-4
+        step = 1e-1
         n, m = np.shape(new_train_data)
         n_t = len(self.test_labels)
 
@@ -46,7 +46,8 @@ class Adversary:
             # construct extended dual variables vector
             l_ext = np.zeros(len(train_labels_ext))
             tmp_i = 0
-            for i in range(len(train_labels_ext)):
+            n_ext = len(train_labels_ext)
+            for i in range(n_ext):
                 if i in svc.support_:
                     l_ext[i] = svc.dual_coef_[0, tmp_i]*train_labels_ext[i]
                     tmp_i += 1
@@ -70,7 +71,7 @@ class Adversary:
                     bin_ = self.test_labels[k] if self.test_labels[k]*(np.dot(w, self.test_dataset[k])+b) > -1 else 0.0
                     obj_grad_val[i, :] += (np.multiply(dw_dh[i, :], self.test_dataset[k, :])+db_dh[i, :])*bin_
 
-            return obj_grad_val
+            return obj_grad_val/n_t
 
         # perform gradient descent
         nit = 0
