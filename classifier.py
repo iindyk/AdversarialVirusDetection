@@ -68,7 +68,7 @@ class Classifier:
                         2 * len(valid_v_indeces) ** 2)
         test_stat_v *= len(train_v_indeces) * len(valid_v_indeces) / (len(train_v_indeces) + len(valid_v_indeces))
 
-        print('classifier: test performed, statistics value is ', test_stat_h + test_stat_v)
+        #print('classifier: test performed, statistics value is ', test_stat_h + test_stat_v)
         if test_stat_h + test_stat_v > self.crit_val and self.crit_val_alg == 'asc' and len(self.test_results) > 1:
             if not self.test_results[len(self.test_results) - 1] and not self.test_results[len(self.test_results) - 2]:
                 self.crit_val = self.crit_val * 1.1
@@ -86,6 +86,16 @@ class Classifier:
             print('     decreasing crit_val to ', self.crit_val)
         elif self.crit_val_alg == 'asc' and self.val_errors[len(self.val_errors) - 1] > self.val_errors[
             len(self.val_errors) - 2]:
+            self.crit_val = self.crit_val * 1.1
+            print('     increasing crit_val to ', self.crit_val)
+
+    def fit(self, train_dataset, train_labels):
+        self.svc = svm.SVC(kernel='linear', C=self.C).fit(train_dataset, train_labels)
+        self.val_errors.append(1 - accuracy_score(self.valid_labels, self.svc.predict(self.valid_dataset)))
+        if self.crit_val_alg == 'desc' and self.val_errors[-1] < self.val_errors[-2]:
+            self.crit_val = self.crit_val * 0.9
+            print('     decreasing crit_val to ', self.crit_val)
+        elif self.crit_val_alg == 'asc' and self.val_errors[-1] > self.val_errors[-2]:
             self.crit_val = self.crit_val * 1.1
             print('     increasing crit_val to ', self.crit_val)
 

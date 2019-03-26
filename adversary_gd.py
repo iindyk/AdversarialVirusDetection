@@ -5,7 +5,7 @@ import sklearn.svm as svm
 
 
 class Adversary:
-    eps = 0.06  # 0.04
+    eps = 0.1  # 0.04
     a = 1.0
 
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels, dim):
@@ -23,10 +23,14 @@ class Adversary:
     # @profile
     def get_infected_dataset(self, new_train_data, new_train_labels):
         maxit = 100
-        delta = 1e-9
+        delta = 1e-2
         step = 1e-1
         n, m = np.shape(new_train_data)
         n_t = len(self.test_labels)
+
+        #
+        if np.random.random() < 0.5: return new_train_data, 0.
+        #
 
         def obj_grad(train_data_current):   # returns approximate gradient of adversary's objective
 
@@ -85,7 +89,9 @@ class Adversary:
             h += change
             nit += 1
             if np.linalg.norm(h) >= self.eps*n:
-                break
+                #break
+                h = self.eps * n * h / np.linalg.norm(h)
 
         print(nit)
+
         return new_train_data+h, np.linalg.norm(h)/n
