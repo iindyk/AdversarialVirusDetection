@@ -83,7 +83,7 @@ for i in range(len(steps)-1):
         test_errs[j, i+1] = 1 - accuracy_score(test_labels, classifiers[j].predict(test_dataset))
     classifiers[5].partial_fit(new_train_dataset, new_train_labels)
 
-    if classifiers[1].is_valid(new_infected_data, new_train_labels):
+    if classifiers[3].is_valid(new_infected_data, new_train_labels):
         adversary.eps *= 1.1
     else:
         adversary.eps *= 0.9
