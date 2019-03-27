@@ -5,7 +5,7 @@ import sklearn.svm as svm
 
 
 class Adversary:
-    eps = 0.1  # 0.04
+    eps = 0.135  # 0.04
     a = 1.0
 
     def __init__(self, initial_train_dataset, initial_train_labels, test_dataset, test_labels, dim):
@@ -22,11 +22,7 @@ class Adversary:
 
     # @profile
     def get_infected_dataset(self, new_train_data, new_train_labels):
-        maxit = 100
-        delta = 1e-2
-        step = 1e-1
         n, m = np.shape(new_train_data)
-        n_t = len(self.test_labels)
 
         #
         if np.random.random() < 0.5: return new_train_data, 0.
@@ -51,7 +47,7 @@ class Adversary:
             if i in svc.support_:
                 l_ext[i] = svc.dual_coef_[0, tmp_i] * train_labels_ext[i]
                 tmp_i += 1
-        h = np.array([l*w for l in l_ext])
-        h = self.eps*h/np.linalg.norm(h)
+        h = np.array([l*w for l in l_ext[:n]])
+        h = self.eps*n*h/np.linalg.norm(h)
 
         return new_train_data+h, np.linalg.norm(h)/n

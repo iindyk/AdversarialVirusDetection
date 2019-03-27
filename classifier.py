@@ -38,7 +38,18 @@ class Classifier:
         pred_labels = self.predict(test_dataset)
         return 1 - accuracy_score(test_labels, pred_labels)
 
-    def is_valid(self, train_dataset, train_labels):
+    def is_valid(self, train_dataset, train_labels, test_stat=0):
+        if test_stat == 0:
+            test_stat = self.get_test_stat(train_dataset, train_labels)
+
+        #print('classifier: test performed, statistics value is ', test_stat_h + test_stat_v)
+        if test_stat > self.crit_val and self.crit_val_alg == 'asc' and len(self.test_results) > 1:
+            if not self.test_results[-1] and not self.test_results[-2] and not self.test_results[-3]:
+                self.crit_val += 0.1
+        self.test_results.append(test_stat < self.crit_val)
+        return test_stat < self.crit_val
+
+    def get_test_stat(self, train_dataset, train_labels):
         test_stat_h = self.part_test_stat_h
         test_stat_v = self.part_test_stat_v
         train_h_indeces = np.where(train_labels == 1)[0]
@@ -68,12 +79,7 @@ class Classifier:
                         2 * len(valid_v_indeces) ** 2)
         test_stat_v *= len(train_v_indeces) * len(valid_v_indeces) / (len(train_v_indeces) + len(valid_v_indeces))
 
-        #print('classifier: test performed, statistics value is ', test_stat_h + test_stat_v)
-        if test_stat_h + test_stat_v > self.crit_val and self.crit_val_alg == 'asc' and len(self.test_results) > 1:
-            if not self.test_results[len(self.test_results) - 1] and not self.test_results[len(self.test_results) - 2]:
-                self.crit_val = self.crit_val * 1.1
-        self.test_results.append(test_stat_h + test_stat_v < self.crit_val)
-        return test_stat_h + test_stat_v < self.crit_val
+        return test_stat_h + test_stat_v
 
     def partial_fit(self, new_train_dataset, new_train_labels):
         self.train_dataset = np.append(self.train_dataset, new_train_dataset, axis=0)
@@ -82,20 +88,20 @@ class Classifier:
         self.val_errors.append(1 - accuracy_score(self.valid_labels, self.svc.predict(self.valid_dataset)))
         if self.crit_val_alg == 'desc' and self.val_errors[len(self.val_errors) - 1] < self.val_errors[
             len(self.val_errors) - 2]:
-            self.crit_val = self.crit_val * 0.9
+            self.crit_val = self.crit_val * 0.95
             print('     decreasing crit_val to ', self.crit_val)
         elif self.crit_val_alg == 'asc' and self.val_errors[len(self.val_errors) - 1] > self.val_errors[
             len(self.val_errors) - 2]:
-            self.crit_val = self.crit_val * 1.1
+            self.crit_val = self.crit_val * 1.05
             print('     increasing crit_val to ', self.crit_val)
 
     def fit(self, train_dataset, train_labels):
         self.svc = svm.SVC(kernel='linear', C=self.C).fit(train_dataset, train_labels)
         self.val_errors.append(1 - accuracy_score(self.valid_labels, self.svc.predict(self.valid_dataset)))
         if self.crit_val_alg == 'desc' and self.val_errors[-1] < self.val_errors[-2]:
-            self.crit_val = self.crit_val * 0.9
+            self.crit_val -= 1 #*= * 0.9
             print('     decreasing crit_val to ', self.crit_val)
         elif self.crit_val_alg == 'asc' and self.val_errors[-1] > self.val_errors[-2]:
-            self.crit_val = self.crit_val * 1.1
+            self.crit_val +=1 #*= 1.1
             print('     increasing crit_val to ', self.crit_val)
 

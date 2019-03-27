@@ -1,6 +1,6 @@
 from data import dataset_parsers as dp
 import classifier as cl
-import adversary_gd as adv
+import adversary_simple as adv
 import numpy as np
 import graphing as gr
 from sklearn.metrics import accuracy_score
@@ -10,7 +10,7 @@ import sklearn.svm as svm
 n_initial = 100  # size of initial training dataset
 n_steps = 100     # number of steps in game
 C = 1.0          # classifier parameter
-norm_trsh = 0.06
+norm_trsh = 0.001
 train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels = dp.read_data()
 m = len(train_dataset[0])
 print('data read complete')
@@ -28,13 +28,13 @@ print('classifier1: initiated, error on test dataset is ', err_test1)
 classifiers.append(classifier1)
 
 classifier2 = cl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
-                           , valid_dataset, valid_labels, C, 10, 'asc')
+                           , valid_dataset, valid_labels, C, 20, 'asc')
 err_test2 = 1 - accuracy_score(test_labels, classifier2.predict(test_dataset))
 print('classifier2: initiated, error on test dataset is ', err_test2)
 classifiers.append(classifier2)
 
 classifier3 = cl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
-                           , valid_dataset, valid_labels, C, 50, 'desc')
+                           , valid_dataset, valid_labels, C, 40, 'desc')
 err_test3 = 1 - accuracy_score(test_labels, classifier3.predict(test_dataset))
 print('classifier3: initiated, error on test dataset is ', err_test3)
 classifiers.append(classifier3)
@@ -59,10 +59,12 @@ test_errs[0, 0] = err_test1
 test_errs[1, 0] = err_test2
 test_errs[2, 0] = err_test3
 test_errs[3, 0] = err_test4
+test_errs[4, 0] = err_test5
 
 data_batches = []
 labels_batches = []
 inf_batches = []
+test_stats = []
 false_pos = np.zeros((len(classifiers), len(steps)))
 false_neg = np.zeros((len(classifiers), len(steps)))
 for i in range(len(steps)-1):
@@ -74,10 +76,11 @@ for i in range(len(steps)-1):
     data_batches.append(new_infected_data)
     labels_batches.append(new_train_labels)
     inf_batches.append(attack_norm > norm_trsh)
+    test_stats.append(classifiers[0].get_test_stat(new_infected_data, new_train_labels))
     for j in range(len(classifiers)):
         t_d_tmp, t_l_tmp = train_dataset[:n_initial, :], train_labels[:n_initial]
-        for d_batch, l_batch, infected in zip(data_batches, labels_batches, inf_batches):
-            if classifiers[j].is_valid(d_batch, l_batch):
+        for d_batch, l_batch, infected, stat in zip(data_batches, labels_batches, inf_batches, test_stats):
+            if classifiers[j].is_valid(d_batch, l_batch, test_stat=stat):
                 t_d_tmp, t_l_tmp = np.append(t_d_tmp, d_batch, axis=0), np.append(t_l_tmp, l_batch)
                 if infected:
                     false_neg[j, i+1] += 1./sum(inf_batches)
@@ -98,4 +101,5 @@ for i in range(len(steps)-1):
 
 print('false_pos', false_pos[:, -1])
 print('false_neg', false_neg[:, -1])
-gr.graph_multidim_results(test_errs, ['constant', 'INC', 'DEC', 'no perturbation'], n_steps)
+print('errors', test_errs[:, -1])
+gr.graph_multidim_results(test_errs, ['constant', 'INC', 'DEC', 'no perturbation', 'no validation'], n_steps)

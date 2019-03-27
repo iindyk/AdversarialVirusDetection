@@ -48,7 +48,7 @@ def graph_multidim_results(test_errs, classifier_names, n):
     n_c = len(classifier_names)
 
     for i in range(n_c):
-        ax.plot(time_pts, test_errs[i, :], '-', label=classifier_names[i])
+        ax.plot(time_pts, test_errs[i, :], '-', label=classifier_names[i], alpha=0.7)
 
     plt.ylim(top=0.5)
     legend = ax.legend(loc='upper left', shadow=True)
