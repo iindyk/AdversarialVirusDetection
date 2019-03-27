@@ -102,6 +102,6 @@ class Classifier:
             self.crit_val -= .1 #*= * 0.9
             print('     decreasing crit_val to ', self.crit_val)
         elif self.crit_val_alg == 'asc' and self.val_errors[-1] > self.val_errors[-2]:
-            self.crit_val += .1 #*= 1.1
+            self.crit_val += .02 #*= 1.1
             print('     increasing crit_val to ', self.crit_val)
 

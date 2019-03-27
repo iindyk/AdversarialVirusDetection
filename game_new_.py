@@ -22,19 +22,19 @@ classifiers = []
 
 
 classifier1 = cl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
-                           , valid_dataset, valid_labels, C, 7.5)
+                           , valid_dataset, valid_labels, C, 8)
 err_test1 = 1 - accuracy_score(test_labels, classifier1.predict(test_dataset))
 print('classifier1: initiated, error on test dataset is ', err_test1)
 classifiers.append(classifier1)
 
 classifier2 = cl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
-                           , valid_dataset, valid_labels, C, 5, 'asc')
+                           , valid_dataset, valid_labels, C, 4, 'asc')
 err_test2 = 1 - accuracy_score(test_labels, classifier2.predict(test_dataset))
 print('classifier2: initiated, error on test dataset is ', err_test2)
 classifiers.append(classifier2)
 
 classifier3 = cl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
-                           , valid_dataset, valid_labels, C, 10, 'desc')
+                           , valid_dataset, valid_labels, C, 11, 'desc')
 err_test3 = 1 - accuracy_score(test_labels, classifier3.predict(test_dataset))
 print('classifier3: initiated, error on test dataset is ', err_test3)
 classifiers.append(classifier3)
