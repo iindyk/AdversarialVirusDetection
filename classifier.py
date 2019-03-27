@@ -16,7 +16,7 @@ class Classifier:
         self.val_errors.append(1 - accuracy_score(self.valid_labels, self.svc.predict(self.valid_dataset)))
         self.crit_val = crit_val
         self.crit_val_alg = crit_val_alg
-        self.test_results = []
+        self.test_results = [False, False, False]
         # part of test statistics
         self.part_test_stat_h = 0.0
         h_indeces = np.where(valid_labels == 1)
@@ -45,7 +45,7 @@ class Classifier:
         #print('classifier: test performed, statistics value is ', test_stat_h + test_stat_v)
         if test_stat > self.crit_val and self.crit_val_alg == 'asc' and len(self.test_results) > 1:
             if not self.test_results[-1] and not self.test_results[-2] and not self.test_results[-3]:
-                self.crit_val += 0.1
+                self.crit_val += 0.01
         self.test_results.append(test_stat < self.crit_val)
         return test_stat < self.crit_val
 
@@ -99,9 +99,9 @@ class Classifier:
         self.svc = svm.SVC(kernel='linear', C=self.C).fit(train_dataset, train_labels)
         self.val_errors.append(1 - accuracy_score(self.valid_labels, self.svc.predict(self.valid_dataset)))
         if self.crit_val_alg == 'desc' and self.val_errors[-1] < self.val_errors[-2]:
-            self.crit_val -= 1 #*= * 0.9
+            self.crit_val -= .1 #*= * 0.9
             print('     decreasing crit_val to ', self.crit_val)
         elif self.crit_val_alg == 'asc' and self.val_errors[-1] > self.val_errors[-2]:
-            self.crit_val +=1 #*= 1.1
+            self.crit_val += .1 #*= 1.1
             print('     increasing crit_val to ', self.crit_val)
 

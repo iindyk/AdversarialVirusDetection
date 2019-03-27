@@ -1,0 +1,19 @@
+constant perturbation norm:
+cl 1 - const, 30
+cl 2 - inc, 20
+cl 3 - desc, 40
+cl 4 - trained on original data
+cl 5 - no validation
+false_pos [0. 0. 0. 0. 0.]
+false_neg [0.         0.02083333 0.         1.         1.        ]
+errors [0.06663026 0.10704533 0.06663026 0.05133807 0.34462043]
+
+adaptive perturbation norm:
+cl 1 - const, 30
+cl 2 - inc, 20
+cl 3 - desc, 40
+cl 4 - trained on original data
+cl 5 - no validation
+false_pos [0. 0. 0. 0. 0.]
+false_neg [0.1  0.32 0.1  1.   1.  ]
+errors [0.31622064 0.34462043 0.31622064 0.05133807 0.34462043]

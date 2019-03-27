@@ -48,7 +48,16 @@ def graph_multidim_results(test_errs, classifier_names, n):
     n_c = len(classifier_names)
 
     for i in range(n_c):
-        ax.plot(time_pts, test_errs[i, :], '-', label=classifier_names[i], alpha=0.7)
+        if i == 0:
+            ax.plot(time_pts, test_errs[i, :], '-', label=classifier_names[i], linestyle='dashed', linewidth=2
+                    , color='brown')
+        elif i == 1:
+            ax.plot(time_pts, test_errs[i, :], '-', label=classifier_names[i], alpha=0.7, linestyle='dashed',
+                    linewidth=2)
+        elif i == 2:
+            ax.plot(time_pts, test_errs[i, :], '-', label=classifier_names[i], alpha=0.7, linewidth=2)
+        else:
+            ax.plot(time_pts, test_errs[i, :], '-', label=classifier_names[i], linewidth=2)
 
     plt.ylim(top=0.5)
     legend = ax.legend(loc='upper left', shadow=True)
