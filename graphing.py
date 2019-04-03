@@ -55,7 +55,7 @@ def graph_multidim_results(test_errs, classifier_names, n):
             ax.plot(time_pts, test_errs[i, :], '-', label=classifier_names[i], alpha=0.7, linestyle='dashed',
                     linewidth=2)
         elif i == 2:
-            ax.plot(time_pts, test_errs[i, :], '-', label=classifier_names[i], alpha=0.7, linewidth=2)
+            ax.plot(time_pts, test_errs[i, :], '-', label=classifier_names[i], alpha=0.7, linewidth=2, linestyle='dashed')
         else:
             ax.plot(time_pts, test_errs[i, :], '-', label=classifier_names[i], linewidth=2)
 

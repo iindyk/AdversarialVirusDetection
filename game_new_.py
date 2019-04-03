@@ -22,19 +22,19 @@ classifiers = []
 
 
 classifier1 = cl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
-                           , valid_dataset, valid_labels, C, 8)
+                           , valid_dataset, valid_labels, C, 8.2)
 err_test1 = 1 - accuracy_score(test_labels, classifier1.predict(test_dataset))
 print('classifier1: initiated, error on test dataset is ', err_test1)
 classifiers.append(classifier1)
 
 classifier2 = cl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
-                           , valid_dataset, valid_labels, C, 4, 'asc')
+                           , valid_dataset, valid_labels, C, 8, 'asc')
 err_test2 = 1 - accuracy_score(test_labels, classifier2.predict(test_dataset))
 print('classifier2: initiated, error on test dataset is ', err_test2)
 classifiers.append(classifier2)
 
 classifier3 = cl.Classifier(train_dataset[:n_initial, :], train_labels[:n_initial]
-                           , valid_dataset, valid_labels, C, 11, 'desc')
+                           , valid_dataset, valid_labels, C, 12, 'desc')
 err_test3 = 1 - accuracy_score(test_labels, classifier3.predict(test_dataset))
 print('classifier3: initiated, error on test dataset is ', err_test3)
 classifiers.append(classifier3)
@@ -84,12 +84,12 @@ for i in range(len(steps)-1):
                 t_d_tmp, t_l_tmp = np.append(t_d_tmp, d_batch, axis=0), np.append(t_l_tmp, l_batch)
                 if infected:
                     false_neg[j, i+1] += 1./sum(inf_batches)
-                    #if j == 0: adversary.eps += 0.005
+                    if j == 0: adversary.eps += 0.00001
             else:
                 if not infected:
                     false_pos[j, i+1] += 1./sum([not inf for inf in inf_batches])
-                #elif j == 0:
-                    #adversary.eps -= 0.005
+                elif j == 0:
+                    adversary.eps -= 0.00001
 
         if j == 3:
             classifiers[3].fit(train_dataset[:steps[i + 1], :], train_labels[:steps[i + 1]])

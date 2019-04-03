@@ -1,19 +1,29 @@
-constant perturbation norm:
-cl 1 - const, 30
-cl 2 - inc, 20
-cl 3 - desc, 40
+constant perturbation norm: eps = 0.02
+cl 1 - const
+cl 2 - inc
+cl 3 - desc
 cl 4 - trained on original data
 cl 5 - no validation
-false_pos [0. 0. 0. 0. 0.]
-false_neg [0.         0.02083333 0.         1.         1.        ]
-errors [0.06663026 0.10704533 0.06663026 0.05133807 0.34462043]
+false_pos [0.01923077 0.         0.01923077 0.         0.        ]
+false_neg [0.0208 0.0417 0.0208 1. 1.]
+errors [0.09175314 0.08902239 0.09175314 0.05133807 0.32987439]
 
-adaptive perturbation norm:
+adaptive perturbation norm: initial eps = 0.02
 cl 1 - const, 30
 cl 2 - inc, 20
 cl 3 - desc, 40
 cl 4 - trained on original data
 cl 5 - no validation
-false_pos [0. 0. 0. 0. 0.]
-false_neg [0.1  0.32 0.1  1.   1.  ]
-errors [0.31622064 0.34462043 0.31622064 0.05133807 0.34462043]
+false_pos [0.0204 0.0408         0.0610 0.         0.        ]
+false_neg [0.1176 0.0392 0.0392 1.         1.        ]
+errors [0.09448389 0.0770071  0.08956854 0.05133807 0.1551065 ]
+
+no perturbation:
+cl 1 - const, 30
+cl 2 - inc, 20
+cl 3 - desc, 40
+cl 4 - trained on original data
+cl 5 - no validation
+false_pos [0.        0.        0.1122449 0.        0.       ]
+false_neg [0. 0. 0. 0. 0.]
+errors [0.05133807 0.05133807 0.05024577 0.05133807 0.05133807]
