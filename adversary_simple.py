@@ -25,7 +25,7 @@ class Adversary:
         n, m = np.shape(new_train_data)
 
         #
-        if np.random.random() < 0.5:  # < 0.5:
+        if np.random.random() < 1:  # < 0.5:
             return new_train_data, 0.
         #
         if len(self.train_dataset) != 0:

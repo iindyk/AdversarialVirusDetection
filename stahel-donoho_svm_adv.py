@@ -2,7 +2,7 @@ from data import dataset_parsers as dp
 from sklearn.metrics import accuracy_score
 import sklearn.svm as svm
 import numpy as np
-import adversary_simple as adv
+import adversary_gd as adv
 from statsmodels import robust
 
 

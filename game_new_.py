@@ -1,6 +1,6 @@
 from data import dataset_parsers as dp
 import classifier as cl
-import adversary_simple as adv
+import adversary_gd as adv
 import numpy as np
 import graphing as gr
 from sklearn.metrics import accuracy_score
